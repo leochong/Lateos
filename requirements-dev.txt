@@ -1,0 +1,22 @@
+# Lateos — Development Dependencies
+
+# Testing
+pytest>=8.0.0
+pytest-cov>=5.0.0
+pytest-mock>=3.14.0
+moto[all]>=5.0.0
+responses>=0.25.0
+
+# Code Quality and Security
+bandit>=1.8.0
+black>=24.0.0
+isort>=5.13.0
+flake8>=7.0.0
+mypy>=1.11.0
+
+# Secret Detection
+pre-commit>=3.8.0
+detect-secrets>=1.4.0
+
+# CDK Testing (needs to be in dev deps too)
+aws-cdk-lib>=2.170.0

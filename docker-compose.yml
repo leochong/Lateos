@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+  localstack:
+    container_name: lateos-localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"            # LocalStack Gateway
+      - "4510-4559:4510-4559"  # External services port range
+    environment:
+      # Core LocalStack Configuration
+      - SERVICES=lambda,dynamodb,s3,secretsmanager,iam,sts,stepfunctions,apigateway,cognito-idp,kms,cloudwatch,logs,events,sns,sqs
+      - DEBUG=0
+      - LAMBDA_EXECUTOR=docker
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - LOCALSTACK_HOST=localhost:4566
+
+      # AWS Configuration
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+
+      # Persistence (optional - comment out for ephemeral)
+      # - PERSISTENCE=1
+      # - PERSIST_ALL=1
+
+      # Edge Port (main gateway)
+      - EDGE_PORT=4566
+
+      # Hostname
+      - LOCALSTACK_HOSTNAME=localhost
+
+    volumes:
+      # Mount Docker socket for Lambda execution
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+      # Optional: Persist data between restarts
+      # - "./localstack-data:/var/lib/localstack"
+
+      # Mount Lambda code for hot reload
+      - "./lambdas:/lambdas:ro"
+
+    networks:
+      - lateos-localstack
+
+networks:
+  lateos-localstack:
+    name: lateos-localstack
+    driver: bridge
