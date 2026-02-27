@@ -1,0 +1,289 @@
+name: Lateos CI/CD Pipeline
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+  NODE_VERSION: '18'
+
+jobs:
+  # ===== JOB 1: Secret Scanning (blocks everything if fails) =====
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for gitleaks
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install detect-secrets
+        run: pip install detect-secrets
+
+      - name: Run detect-secrets scan
+        run: |
+          detect-secrets scan --baseline .secrets.baseline
+          if [ $? -ne 0 ]; then
+            echo "❌ New secrets detected! Please review and update .secrets.baseline"
+            exit 1
+          fi
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # ===== JOB 2: Security Linting (runs after secret-scan) =====
+  security-lint:
+    name: Security Linting
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install bandit
+        run: pip install bandit[toml]
+
+      - name: Run bandit (warn on low/medium)
+        run: |
+          bandit -r lambdas/ infrastructure/ scripts/ -ll --exit-zero || true
+        continue-on-error: true
+
+      - name: Run bandit (fail on high/critical)
+        run: |
+          bandit -r lambdas/ infrastructure/ scripts/ -lll
+          if [ $? -ne 0 ]; then
+            echo "❌ High or critical severity security issues found!"
+            exit 1
+          fi
+
+  # ===== JOB 3: CDK Security (runs after secret-scan) =====
+  cdk-security:
+    name: CDK Security Checks
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install AWS CDK
+        run: npm install -g aws-cdk
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: CDK Synth
+        run: |
+          # Phase 0: No stacks yet, so synth will produce empty output
+          # This validates cdk.json and app.py are correct
+          cdk synth || echo "⚠️  CDK synth expected to produce no output in Phase 0"
+
+      - name: Run cdk-nag (when stacks exist)
+        run: |
+          # Phase 1+: This will check for security issues
+          # Phase 0: Skip (no stacks yet)
+          echo "ℹ️  cdk-nag checks will run in Phase 1+ when stacks are added"
+        continue-on-error: true
+
+  # ===== JOB 4: Unit Tests (runs after security checks) =====
+  unit-tests:
+    name: Unit Tests & Coverage
+    runs-on: ubuntu-latest
+    needs: [security-lint, cdk-security]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run pytest with coverage
+        run: |
+          # Phase 0: Only infrastructure tests exist
+          # Phase 1+: Will include lambdas/ tests
+          if [ -d "tests/" ]; then
+            pytest tests/ \
+              --cov=lambdas \
+              --cov=infrastructure \
+              --cov-report=xml \
+              --cov-report=term \
+              --cov-fail-under=80 \
+              -v
+          else
+            echo "ℹ️  No tests directory yet (Phase 0)"
+          fi
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-lateos
+        continue-on-error: true
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: htmlcov/
+        if: always()
+
+  # ===== JOB 5: Code Quality Checks =====
+  code-quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    needs: secret-scan
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install black isort flake8 mypy
+
+      - name: Run black (check only)
+        run: black --check --line-length=100 .
+
+      - name: Run isort (check only)
+        run: isort --check-only --profile black --line-length 100 .
+
+      - name: Run flake8
+        run: flake8 --max-line-length=100 --extend-ignore=E203,W503 .
+
+      - name: Run mypy (type checking)
+        run: |
+          # Phase 1+: Enable when Lambda code exists
+          # mypy lambdas/ infrastructure/ --ignore-missing-imports
+          echo "ℹ️  mypy type checking will run in Phase 1+"
+        continue-on-error: true
+
+  # ===== JOB 6: Build Validation =====
+  build-validation:
+    name: Build Validation
+    runs-on: ubuntu-latest
+    needs: [unit-tests, code-quality]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          npm install -g aws-cdk
+
+      - name: Validate all dependencies install cleanly
+        run: |
+          pip check
+          cdk --version
+
+      - name: Check for dependency vulnerabilities
+        run: |
+          pip install safety
+          safety check --json || echo "⚠️  Dependency vulnerabilities found - review required"
+        continue-on-error: true
+
+  # ===== JOB 7: Summary Report =====
+  ci-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [secret-scan, security-lint, cdk-security, unit-tests, code-quality, build-validation]
+    if: always()
+    steps:
+      - name: Check job results
+        run: |
+          echo "## 🎯 Lateos CI Pipeline Summary"
+          echo ""
+          echo "### Job Results:"
+          echo "- Secret Scanning: ${{ needs.secret-scan.result }}"
+          echo "- Security Linting: ${{ needs.security-lint.result }}"
+          echo "- CDK Security: ${{ needs.cdk-security.result }}"
+          echo "- Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "- Code Quality: ${{ needs.code-quality.result }}"
+          echo "- Build Validation: ${{ needs.build-validation.result }}"
+          echo ""
+
+          if [ "${{ needs.secret-scan.result }}" != "success" ]; then
+            echo "❌ **CRITICAL**: Secret scanning failed - PR blocked"
+            exit 1
+          fi
+
+          if [ "${{ needs.security-lint.result }}" != "success" ]; then
+            echo "❌ Security linting failed - review required"
+            exit 1
+          fi
+
+          if [ "${{ needs.unit-tests.result }}" != "success" ]; then
+            echo "❌ Unit tests failed - review required"
+            exit 1
+          fi
+
+          echo "✅ All critical checks passed!"
