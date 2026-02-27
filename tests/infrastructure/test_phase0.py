@@ -146,11 +146,10 @@ class TestPhase0Setup:
 
         content = precommit_config.read_text()
 
-        # Required security hooks
+        # Required security hooks (TruffleHog runs in CI/CD, not pre-commit)
         required_hooks = [
             "detect-secrets",
             "gitleaks",
-            "trufflehog",
             "bandit",
         ]
 
