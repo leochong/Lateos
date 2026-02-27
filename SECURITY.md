@@ -91,6 +91,8 @@ data breach
 
 ### What Lateos Prevents (vs. Clawdbot/Moltbot Vulnerabilities)
 
+<!-- markdownlint-disable MD013 -->
+
 | CVE / Issue                     | Root Cause                       | Lateos Prevention                   | Status        |
 | ------------------------------- | -------------------------------- | ----------------------------------- | ------------- |
 | **Exposed Admin Panels**        | Always-on process, no auth       | No persistent processes—serverless  | ✅ Immune     |
@@ -101,6 +103,8 @@ data breach
 | **Prompt Injection**            | No input sanitization            | Injection detection pipeline        | ✅ Protected  |
 | **Delayed Multi-Turn Attacks**  | No memory guardrails             | Bedrock Guardrails + memory TTL     | ✅ Protected  |
 | **Account Hijacking**           | No trademark protection          | GitHub org, verified publisher      | ✅ Protected  |
+
+<!-- markdownlint-enable MD013 -->
 
 **Test Coverage:** All vulnerabilities above have regression tests in
 `tests/security/test_clawdbot_regression.py`
@@ -220,9 +224,13 @@ Post-launch, we plan to offer:
 
 ## 🔍 Security Audit History
 
+<!-- markdownlint-disable MD013 -->
+
 | Date       | Auditor    | Scope               | Findings           | Status    |
 | ---------- | ---------- | ------------------- | ------------------ | --------- |
 | 2026-02-27 | Self-audit | Phase 0 scaffolding | 0 CRITICAL, 0 HIGH | ✅ Clean  |
+
+<!-- markdownlint-enable MD013 -->
 
 External audit planned for post-Phase 1 launch.
 
