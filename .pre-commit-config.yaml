@@ -1,0 +1,147 @@
+# Lateos Pre-Commit Configuration
+# Security-first hooks to prevent secrets and enforce code quality
+
+repos:
+  # ===== SECRET DETECTION =====
+  # Yelp's detect-secrets - prevents secrets from being committed
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: '^(\.secrets\.baseline|package-lock\.json)$'
+
+  # Gitleaks - additional secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.0
+    hooks:
+      - id: gitleaks
+        exclude: '^\.secrets\.baseline$'  # Baseline contains hashed values, not real secrets
+
+  # ===== BASIC FILE HYGIENE =====
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      # Prevent private keys from being committed
+      - id: detect-private-key
+
+      # File format checks
+      - id: check-yaml
+        args: ['--unsafe']  # Allow custom YAML tags (needed for CloudFormation)
+      - id: check-json
+      - id: check-toml
+
+      # Prevent large files (>500KB)
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+      # Prevent merge conflict markers
+      - id: check-merge-conflict
+
+      # Check for files that would conflict on case-insensitive filesystems
+      - id: check-case-conflict
+
+      # Fix file endings
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: ['--markdown-linebreak-ext=md']
+
+      # Prevent committing to main branch directly
+      # Disabled for Phase 0 initial setup - re-enable for Phase 1+
+      # - id: no-commit-to-branch
+      #   args: ['--branch', 'main', '--branch', 'master']
+
+  # ===== PYTHON CODE QUALITY =====
+  # Black - opinionated Python formatter
+  - repo: https://github.com/psf/black
+    rev: 26.1.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: ['--line-length=100']
+
+  # isort - import sorting
+  - repo: https://github.com/PyCQA/isort
+    rev: 8.0.0
+    hooks:
+      - id: isort
+        args: ['--profile', 'black', '--line-length', '100']
+
+  # Flake8 - Python linting
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.3.0
+    hooks:
+      - id: flake8
+        args: ['--max-line-length=100', '--extend-ignore=E203,W503']
+        exclude: '^(\.venv|venv|ENV|env|build|dist)/'
+
+  # ===== SECURITY SCANNING =====
+  # Bandit - Python security linter
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      # Low/Medium severity - warn only
+      - id: bandit
+        name: bandit-warn
+        args: ['-ll', '--recursive', 'lambdas/', 'infrastructure/', 'scripts/']
+        exclude: '^tests/'
+        stages: [pre-commit]
+
+      # High severity - fail the commit
+      - id: bandit
+        name: bandit-fail
+        args: ['-lll', '--recursive', 'lambdas/', 'infrastructure/', 'scripts/']
+        exclude: '^tests/'
+        stages: [pre-commit]
+
+  # ===== TERRAFORM/CDK SECURITY (disabled for Phase 0) =====
+  # Checkov - IaC security scanning
+  # Uncomment when CDK infrastructure exists (Phase 1+)
+  # - repo: https://github.com/bridgecrewio/checkov
+  #   rev: 3.2.25
+  #   hooks:
+  #     - id: checkov
+  #       name: checkov-cdk
+  #       args: ['--framework', 'cloudformation', '--quiet']
+  #       files: 'cdk\.out/.*\.template\.(json|yaml)$'
+  #       pass_filenames: false
+  #       always_run: false
+
+  # ===== MARKDOWN LINTING =====
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.47.0
+    hooks:
+      - id: markdownlint
+        args: ['--fix']
+        exclude: '^(mnt/|\.venv/)'
+
+  # ===== COMMIT MESSAGE LINTING =====
+  # Commitizen - conventional commits
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v4.13.9
+    hooks:
+      - id: commitizen
+        stages: [commit-msg]
+
+# ===== CONFIGURATION =====
+default_language_version:
+  python: python3
+
+# Fail fast - stop on first failure
+fail_fast: false
+
+# Exclude patterns
+exclude: |
+  (?x)^(
+    \.venv/.*|
+    venv/.*|
+    \.aws-sam/.*|
+    cdk\.out/.*|
+    node_modules/.*|
+    \.pytest_cache/.*|
+    __pycache__/.*|
+    .*\.egg-info/.*|
+    mnt/.*|
+    \.localstack/.*|
+    localstack-data/.*
+  )$

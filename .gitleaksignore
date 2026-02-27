@@ -1,0 +1,9 @@
+# Gitleaks Ignore File
+# Files to exclude from gitleaks secret scanning
+
+# Baseline file for detect-secrets (contains hashed values, not real secrets)
+.secrets.baseline
+
+# Test files with intentional mock secrets
+**/test_*.py
+**/tests/**/*_test.py

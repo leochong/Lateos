@@ -13,9 +13,10 @@
 *_ed25519
 credentials
 credentials.json
-*secret*
 *credential*
 *token*
+*secret*
+!.secrets.baseline  # Exception: baseline file MUST be committed
 .aws/
 
 # ===== AWS CDK =====
@@ -90,7 +91,7 @@ yarn.lock
 .terraform/
 
 # ===== Security Scanning =====
-.secrets.baseline
+# Note: .secrets.baseline should be committed (it's the detection baseline, not actual secrets)
 
 # ===== Misc =====
 .tmp/
