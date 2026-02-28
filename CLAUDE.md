@@ -27,17 +27,20 @@ Claude AI by Anthropic. Full design conversation publicly available in the repo.
 ## Quick Reference
 
 **Before you start any task:**
+
 1. Read STATUS.md to understand current phase and blockers
 2. Read the 8 CRITICAL security rules below (never violate these)
 3. Check if there's a domain-specific CLAUDE.md (infrastructure/, lambdas/, tests/)
 4. Review relevant agent definitions in .claude/agents/ for complex tasks
 
 **When implementing features:**
+
 - Always spawn agents in order: explore → IaC → Lambda → tests → security audit
 - Use custom slash commands: `/new-lambda`, `/security-review`, `/cost-check`
 - Follow model selection strategy: Haiku for mechanical tasks, Sonnet for logic, Opus for security
 
 **Most common commands:**
+
 ```bash
 # Start fresh session
 source .venv/bin/activate
@@ -64,7 +67,8 @@ RULE 1: No secrets in code, environment variables, or config files.
 RULE 2: No wildcard (*) actions or resources in any IAM policy.
         Every Lambda has a scoped execution role. Period.
 
-RULE 3: No public S3 buckets, no public endpoints without WAF + Cognito.
+RULE 3: No public S3 buckets, no public endpoints without Cognito.
+        (WAF deferred to Phase 2 per ADR-011)
 
 RULE 4: No shell execution in any Lambda or skill.
         os.system(), subprocess, eval(), exec() are banned.
@@ -102,7 +106,7 @@ why and offer a compliant alternative.
 | Observability | CloudWatch + CloudTrail + X-Ray | Full audit trail |
 | Security scanning | AWS Security Hub + GuardDuty | Always on |
 | Cost protection | AWS Budgets + Kill Switch Lambda | Prevents runaway costs |
-| API protection | WAF v2 + Shield Standard | Managed rule groups |
+| API protection | API Gateway throttling + Cognito | WAF v2 deferred to Phase 2 (ADR-011) |
 
 ---
 
@@ -181,6 +185,7 @@ lateos/
 ## Development Commands
 
 ### Phase 0 Setup (Current Phase)
+
 ```bash
 # Initial environment setup
 python -m venv .venv && source .venv/bin/activate
@@ -194,6 +199,7 @@ detect-secrets scan --baseline .secrets.baseline
 ```
 
 ### LocalStack Development (Phase 1+)
+
 ```bash
 # Start LocalStack
 docker-compose up -d localstack
@@ -211,6 +217,7 @@ docker-compose down
 ```
 
 ### CDK Operations (Phase 1+)
+
 ```bash
 cdk synth                        # Synthesize CloudFormation
 cdk diff                         # Preview changes
@@ -219,6 +226,7 @@ cdk deploy CostProtectionStack   # Deploy specific stack
 ```
 
 ### Testing
+
 ```bash
 pytest tests/unit/               # Unit tests (no AWS needed)
 pytest tests/security/           # Security regression tests
@@ -230,6 +238,7 @@ pytest tests/unit/test_specific.py::test_function_name -v
 ```
 
 ### Security Scanning
+
 ```bash
 bandit -r lambdas/ -ll           # Python security linting
 cdk-nag                          # IaC security scanning (Phase 1+)
@@ -267,6 +276,7 @@ via CDK context (`cdk.json`) or at runtime via Secrets Manager.
 ## Coding Standards
 
 ### Python
+
 - Python 3.12, type hints required on all function signatures
 - Black formatter, isort for imports, flake8 for linting
 - Docstrings on all public functions and classes (Google style)
@@ -274,6 +284,7 @@ via CDK context (`cdk.json`) or at runtime via Secrets Manager.
 - Structured logging via `aws_lambda_powertools.Logger` — not `print()`
 
 ### CDK
+
 - CDK v2 Python, constructs in `/infrastructure/constructs/`
 - Every stack has a corresponding test file
 - `cdk-nag` AwsSolutionsChecks must pass with zero suppressions
@@ -282,6 +293,7 @@ via CDK context (`cdk.json`) or at runtime via Secrets Manager.
   `Lateos{Resource}{Purpose}` e.g. `LateosLambdaSkillEmail`
 
 ### Lambda
+
 - Lambda Powertools for all Lambdas: Logger, Tracer, Metrics
 - Secrets fetched at module level (warm invocation cache), not per-request
 - Every handler has a typed event model (dataclass or TypedDict)
@@ -289,6 +301,7 @@ via CDK context (`cdk.json`) or at runtime via Secrets Manager.
 - See `lambdas/CLAUDE.md` for full Lambda standards
 
 ### Tests
+
 - pytest, moto for AWS mocking, pytest-cov for coverage
 - Minimum 80% coverage overall, 90% on security-critical modules
 - Every security rule above has a corresponding test
@@ -307,6 +320,7 @@ security/*    ← security fixes, can merge to main directly with review
 ```
 
 **Commit message format (Conventional Commits):**
+
 ```
 feat(skills): add Gmail OAuth integration
 fix(kill-switch): handle missing state machine ARN gracefully
@@ -316,6 +330,7 @@ docs(threat-model): document prompt injection attack vectors
 ```
 
 **Never commit to main directly.** All changes via PR with:
+
 - CI pipeline passing (tests, security scans, coverage gate)
 - At least one reviewer approval
 - No unresolved security scan findings
@@ -400,6 +415,7 @@ This achieves 80-90% cost savings vs. running Opus for the full session.
 ### Agent Coordination
 
 The `.claude/` directory contains specialized agent definitions for complex tasks:
+
 - `orchestrator.md` — Coordinates multi-agent feature development
 - `iac-agent.md` — CDK infrastructure changes
 - `lambda-agent.md` — Lambda function implementation
@@ -418,26 +434,31 @@ The `README.md` in `.claude/commands/` documents custom slash commands like `/ne
 ## Known Intentional Design Decisions (ADRs)
 
 **ADR-001:** Use Bedrock instead of OpenAI/Anthropic direct API
+
 - Reason: Keeps all data within the AWS security boundary
 - Tradeoff: Model selection limited to Bedrock-available models
 - Status: Accepted
 
 **ADR-002:** Express Workflows over Standard for Step Functions
+
 - Reason: Lower cost for high-frequency short-duration executions
 - Tradeoff: No built-in execution history (we use CloudWatch instead)
 - Status: Accepted
 
 **ADR-003:** DynamoDB on-demand over provisioned capacity
+
 - Reason: Protects against traffic spikes without over-provisioning
 - Tradeoff: Slightly higher per-request cost at scale
 - Status: Accepted
 
 **ADR-004:** MIT License
+
 - Reason: Maximum adoption, no viral copyleft concerns for integrators
 - Tradeoff: Commercial users can use without contributing back
 - Status: Accepted
 
 **ADR-005:** Python for Lambda, not Node.js
+
 - Reason: Broader contributor base in security/ML community
 - Tradeoff: Slightly slower cold starts than Node.js
 - Status: Accepted

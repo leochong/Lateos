@@ -1,5 +1,5 @@
 {
-  "app": "python3 infrastructure/app.py",
+  "app": ".venv312/bin/python infrastructure/cdk_wrapper.py",
   "watch": {
     "include": [
       "infrastructure/**/*.py",
@@ -76,7 +76,7 @@
     "cloudwatch_alarm_evaluation_periods": 2,
     "cloudwatch_alarm_datapoints_to_alarm": 2,
 
-    "waf_enabled": true,
+    "waf_enabled": false,
     "guardduty_enabled": true,
     "cloudtrail_enabled": true,
 

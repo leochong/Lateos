@@ -2,34 +2,82 @@
 """
 Lateos CDK App Entry Point
 
-This is a placeholder for Phase 0. Actual CDK stacks will be added in Phase 1.
-For now, this file allows `cdk synth` to run and validate the CDK configuration.
+Instantiates all infrastructure stacks for the Lateos AI Personal Agent.
+Stacks are deployed in dependency order.
 """
 
 import aws_cdk as cdk
-
-# Phase 0: Placeholder app
-# Phase 1+: Import and instantiate actual stacks
+from stacks.core_stack import CoreStack
+from stacks.cost_protection_stack import CostProtectionStack
+from stacks.memory_stack import MemoryStack
+from stacks.orchestration_stack import OrchestrationStack
 
 app = cdk.App()
 
 # Get configuration from cdk.json context
 environment = app.node.try_get_context("environment") or "dev"
 aws_region = app.node.try_get_context("aws_region") or "us-east-1"
+resource_tags = app.node.try_get_context("resource_tags") or {}
 
-# Placeholder: No stacks yet
-# In Phase 1, we'll add:
-# - CoreStack (API Gateway, Cognito, WAF)
-# - MemoryStack (DynamoDB, KMS)
-# - OrchestrationStack (Step Functions, Lambdas)
-# - SkillsStack (Skill Lambdas)
-# - IntegrationsStack (Messaging integrations)
-# - CostProtectionStack (Budgets, kill switch)
+# Define stack environment
+env = cdk.Environment(
+    account=None,  # Use default account from AWS credentials
+    region=aws_region,
+)
+
+# Stack 1: Core Infrastructure (API Gateway, Cognito)
+core_stack = CoreStack(
+    app,
+    f"LateosCore{environment.capitalize()}Stack",
+    env=env,
+    description=(
+        "Lateos core infrastructure: API Gateway, Cognito, CloudWatch Logs "
+        "(WAF deferred to Phase 2)"
+    ),
+)
+
+# Stack 2: Orchestration Infrastructure (Step Functions, Lambda orchestration)
+orchestration_stack = OrchestrationStack(
+    app,
+    f"LateosOrchestration{environment.capitalize()}Stack",
+    core_stack=core_stack,
+    env=env,
+    description=(
+        "Lateos orchestration infrastructure: Step Functions Express " "Workflows, Lambda functions"
+    ),
+)
+
+# Stack 3: Memory Infrastructure (DynamoDB tables, KMS encryption)
+memory_stack = MemoryStack(
+    app,
+    f"LateosMemory{environment.capitalize()}Stack",
+    env=env,
+    description=(
+        "Lateos memory infrastructure: DynamoDB tables with KMS encryption "
+        "and per-user partitioning"
+    ),
+)
+
+# Stack 4: Cost Protection Infrastructure (Budgets, kill switch, alarms)
+cost_protection_stack = CostProtectionStack(
+    app,
+    f"LateosCostProtection{environment.capitalize()}Stack",
+    core_stack=core_stack,
+    env=env,
+    description=(
+        "Lateos cost protection infrastructure: AWS Budgets, kill switch "
+        "Lambda, CloudWatch alarms"
+    ),
+)
 
 # Add required tags to all resources
 cdk.Tags.of(app).add("Project", "Lateos")
 cdk.Tags.of(app).add("ManagedBy", "CDK")
 cdk.Tags.of(app).add("Environment", environment)
 cdk.Tags.of(app).add("Repository", "github.com/Leochong/lateos")
+
+# Add any additional tags from cdk.json
+for key, value in resource_tags.items():
+    cdk.Tags.of(app).add(key, value)
 
 app.synth()
