@@ -1,23 +1,28 @@
 # Lateos — Project Status
 
 **Last Updated:** 2026-02-28
-**Current Phase:** Phase 2 — Agent Pipeline (COMPLETE ✅) — COMMITTED
-**Session #:** 2
+**Current Phase:** Phase 3 — Skill Lambdas (IN PROGRESS)
+**Session #:** 3
 
 ---
 
 ## 🎯 Active Sprint Goal
 
-**Phase 2 COMPLETE ✅ — COMMITTED TO GIT (commit f1acb81)**
+**Phase 3 — Skill Lambdas (IN PROGRESS)**
 
-All core Lambda functions implemented with:
-- Prompt injection detection (RULE 5) — 15+ patterns
-- Output sanitization (RULE 8) — secret redaction
-- Cognito user context extraction
-- Rule-based intent classification
-- Action routing with built-in handlers
+Completed (commit dfbb541):
+- ✅ Validator enhanced: 18 prompt injection patterns (was 15)
+- ✅ Email skill: Gmail OAuth with scoped IAM
+- ✅ Calendar skill: Google Calendar API with scoped IAM
+- ✅ Web fetch skill: HTTP client with domain whitelist
+- ✅ File ops skill: S3 storage with per-user isolation
+- ✅ SkillsStack: 4 Lambdas with dedicated IAM roles
+- ✅ CDK synth: 5 stacks (LateosSkillsDevStack added)
 
-**Next sprint:** Phase 3 — Skill Lambdas (email, calendar, web fetch, file operations)
+**Current tasks:**
+- Step Functions workflow integration (wire all components)
+- Bedrock Guardrails integration
+- LocalStack integration testing
 
 ---
 
@@ -78,12 +83,17 @@ All core Lambda functions implemented with:
 - [x] Skill executor framework (deferred to Phase 3)
 - [x] Full Step Functions integration (deferred to Phase 3)
 
-### Phase 3 — Skill Lambdas
+### Phase 3 — Skill Lambdas (IN PROGRESS)
 
-- [ ] Email skill (scoped IAM)
-- [ ] Calendar skill (scoped IAM)
-- [ ] Web fetch skill (scoped IAM)
-- [ ] File operations skill (scoped IAM)
+- [x] Email skill (scoped IAM) — Gmail OAuth integration
+- [x] Calendar skill (scoped IAM) — Google Calendar API
+- [x] Web fetch skill (scoped IAM) — HTTP with domain whitelist
+- [x] File operations skill (scoped IAM) — S3 with per-user isolation
+- [x] SkillsStack with 4 Lambda functions and dedicated IAM roles
+- [x] Validator enhancement (18 patterns, all tests passing)
+- [ ] Step Functions workflow integration (wire all components)
+- [ ] Bedrock Guardrails integration
+- [ ] LocalStack full integration test
 
 ### Phase 4 — Security Hardening
 
@@ -105,15 +115,16 @@ All core Lambda functions implemented with:
 
 ## 🚧 Current Blockers
 
-**None** — Phase 2 COMPLETE and committed! ✅
+**None** — Phase 3 skills COMMITTED! ✅
 
-**Git commit:** `f1acb81` (2026-02-28)
-- 29 files changed, 4,907 insertions
-- All pre-commit hooks passed (secret detection, linting, formatting, security)
-- All Lambda functions with type hints and structured logging
-- All security rules (RULE 5, RULE 8) implemented
+**Latest commit:** `dfbb541` (2026-02-28)
+- 8 files changed, 1,995 insertions
+- 4 skill Lambdas with scoped IAM roles (RULE 2)
+- SkillsStack: dedicated IAM role per skill (no cross-skill access)
+- All pre-commit hooks passed
+- CDK synth: 5 stacks including LateosSkillsDevStack
 
-**Ready to begin Phase 3** (Skill Lambdas).
+**Next:** Step Functions integration, Bedrock Guardrails, LocalStack testing
 
 ---
 
