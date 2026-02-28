@@ -10,17 +10,20 @@
 
 **Phase 3 — Skill Lambdas (IN PROGRESS)**
 
-Completed (commit dfbb541):
+Completed (commits dfbb541, 702b215, 78cea17):
+
 - ✅ Validator enhanced: 18 prompt injection patterns (was 15)
 - ✅ Email skill: Gmail OAuth with scoped IAM
 - ✅ Calendar skill: Google Calendar API with scoped IAM
 - ✅ Web fetch skill: HTTP client with domain whitelist
 - ✅ File ops skill: S3 storage with per-user isolation
 - ✅ SkillsStack: 4 Lambdas with dedicated IAM roles
-- ✅ CDK synth: 5 stacks (LateosSkillsDevStack added)
+- ✅ Step Functions workflow: All 9 Lambdas wired (5 core + 4 skills)
+- ✅ OrchestrationStack: Complete workflow with Choice state skill routing
+- ✅ CDK synth: 5 stacks including LateosSkillsDevStack
 
 **Current tasks:**
-- Step Functions workflow integration (wire all components)
+
 - Bedrock Guardrails integration
 - LocalStack integration testing
 
@@ -91,7 +94,9 @@ Completed (commit dfbb541):
 - [x] File operations skill (scoped IAM) — S3 with per-user isolation
 - [x] SkillsStack with 4 Lambda functions and dedicated IAM roles
 - [x] Validator enhancement (18 patterns, all tests passing)
-- [ ] Step Functions workflow integration (wire all components)
+- [x] Step Functions workflow integration (all 9 Lambdas wired)
+- [x] OrchestrationStack: 3 missing core Lambdas added (intent_classifier, action_router, output_sanitizer)
+- [x] OrchestrationStack: Choice state skill routing to 4 skills
 - [ ] Bedrock Guardrails integration
 - [ ] LocalStack full integration test
 
@@ -115,16 +120,23 @@ Completed (commit dfbb541):
 
 ## 🚧 Current Blockers
 
-**None** — Phase 3 skills COMMITTED! ✅
+**None** — Phase 3 infrastructure COMPLETE! ✅
 
-**Latest commit:** `dfbb541` (2026-02-28)
-- 8 files changed, 1,995 insertions
-- 4 skill Lambdas with scoped IAM roles (RULE 2)
-- SkillsStack: dedicated IAM role per skill (no cross-skill access)
+**Latest commit:** `78cea17` (2026-02-28)
+
+- Step Functions workflow integration complete
+- All 9 Lambda functions wired: 5 core + 4 skills
+- OrchestrationStack: Complete workflow with Choice state skill routing
+- Workflow: Validate → Orchestrate → ClassifyIntent → RouteAction → Choice (email/calendar/web/files) → SanitizeOutput
+- CDK synth: 5 stacks synthesize successfully
 - All pre-commit hooks passed
-- CDK synth: 5 stacks including LateosSkillsDevStack
 
-**Next:** Step Functions integration, Bedrock Guardrails, LocalStack testing
+**Previous commits this session:**
+
+- `dfbb541`: 4 skill Lambdas with scoped IAM roles (RULE 2)
+- `702b215`: STATUS.md update for Phase 3 skills
+
+**Next:** Bedrock Guardrails integration, LocalStack testing
 
 ---
 
@@ -181,6 +193,24 @@ Completed (commit dfbb541):
 | LATEOS-COMPLETE-SUMMARY.md | Created | Complete project summary and context |
 | STATUS.md | Modified | Updated for Phase 2 completion and commit |
 | **GIT COMMIT** | **f1acb81** | **Phase 2 complete — all changes committed** |
+
+### Session 3 (Phase 3)
+
+| File | Action | Notes |
+|------|--------|-------|
+| lambdas/core/validator.py | Modified | Added 3 system prompt exfiltration patterns (15→18 total) |
+| lambdas/skills/email_skill.py | Created | Gmail OAuth integration with scoped IAM (send, read, search) |
+| lambdas/skills/calendar_skill.py | Created | Google Calendar API with scoped IAM (create, list, update, delete) |
+| lambdas/skills/web_fetch_skill.py | Created | HTTP client with domain whitelist, rate limiting |
+| lambdas/skills/file_ops_skill.py | Created | S3 storage with per-user isolation (RULE 6) |
+| infrastructure/stacks/skills_stack.py | Created | SkillsStack with 4 Lambdas, dedicated IAM roles per skill |
+| infrastructure/app.py | Modified | Reordered stacks: SkillsStack before OrchestrationStack |
+| infrastructure/stacks/orchestration_stack.py | Modified | Added 3 core Lambdas + complete workflow with skill routing |
+| test_validator.py | Modified | All 5 tests passing (was 4/5) |
+| STATUS.md | Modified | Updated for Phase 3 progress (3 times) |
+| **GIT COMMIT** | **dfbb541** | **4 skill Lambdas + SkillsStack** |
+| **GIT COMMIT** | **702b215** | **STATUS.md update** |
+| **GIT COMMIT** | **78cea17** | **Step Functions workflow integration** |
 
 ---
 
