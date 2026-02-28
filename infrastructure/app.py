@@ -38,15 +38,8 @@ core_stack = CoreStack(
 )
 
 # Stack 2: Orchestration Infrastructure (Step Functions, Lambda orchestration)
-orchestration_stack = OrchestrationStack(
-    app,
-    f"LateosOrchestration{environment.capitalize()}Stack",
-    core_stack=core_stack,
-    env=env,
-    description=(
-        "Lateos orchestration infrastructure: Step Functions Express " "Workflows, Lambda functions"
-    ),
-)
+# Note: Will be updated after SkillsStack to wire skills into workflow
+orchestration_stack_placeholder = None
 
 # Stack 3: Memory Infrastructure (DynamoDB tables, KMS encryption)
 memory_stack = MemoryStack(
@@ -81,6 +74,20 @@ skills_stack = SkillsStack(
     description=("Lateos skills infrastructure: Skill Lambda functions with scoped IAM roles"),
 )
 skills_stack.add_dependency(memory_stack)
+
+# Stack 2 (Deferred): Orchestration with Skills Integration
+orchestration_stack = OrchestrationStack(
+    app,
+    f"LateosOrchestration{environment.capitalize()}Stack",
+    core_stack=core_stack,
+    skills_stack=skills_stack,
+    env=env,
+    description=(
+        "Lateos orchestration infrastructure: Step Functions Express "
+        "Workflows, Lambda orchestration"
+    ),
+)
+orchestration_stack.add_dependency(skills_stack)
 
 # Add required tags to all resources
 cdk.Tags.of(app).add("Project", "Lateos")
