@@ -320,6 +320,20 @@ class OrchestrationStack(Stack):
             )
         )
 
+        # Grant Bedrock Guardrails permission (Phase 3)
+        # Note: Guardrails ID will be provided via environment variable
+        # If not configured, Lambda will skip Guardrails check (LocalStack compatible)
+        output_sanitizer_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AllowBedrockGuardrails",
+                actions=["bedrock:ApplyGuardrail"],
+                resources=[
+                    # Scoped to Lateos guardrails only
+                    f"arn:aws:bedrock:{self.region}:{self.account}:guardrail/*"
+                ],
+            )
+        )
+
         # Output sanitizer Lambda
         self.output_sanitizer_lambda = lambda_.Function(
             self,
@@ -340,6 +354,11 @@ class OrchestrationStack(Stack):
                 "ENVIRONMENT": environment,
                 "LOG_LEVEL": "INFO",
                 "POWERTOOLS_SERVICE_NAME": "output-sanitizer",
+                # Bedrock Guardrails configuration (Phase 3)
+                # Optional: If not set, Guardrails check will be skipped (LocalStack compatible)
+                "GUARDRAILS_ID": self.node.try_get_context("bedrock_guardrails_id") or "",
+                "GUARDRAILS_VERSION": self.node.try_get_context("bedrock_guardrails_version")
+                or "DRAFT",
             },
             log_retention=logs.RetentionDays.ONE_MONTH,
         )

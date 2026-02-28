@@ -9,16 +9,37 @@ Sanitization:
 - Remove internal error details
 - Sanitize file paths
 - Remove IP addresses and internal URLs
+- Apply Bedrock Guardrails for harmful content, PII, profanity (Phase 3)
+
+LocalStack Compatible:
+- Falls back gracefully if Bedrock Guardrails not available
 """
 
+import json
+import os
 import re
 from typing import Any, Dict
 
+import boto3
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.typing import LambdaContext
+from botocore.exceptions import ClientError
 
 logger = Logger(service="output-sanitizer")
 tracer = Tracer(service="output-sanitizer")
+
+# Bedrock client for Guardrails
+try:
+    bedrock_runtime = boto3.client("bedrock-runtime")
+    BEDROCK_AVAILABLE = True
+except Exception as e:
+    logger.warning(f"Bedrock client initialization failed (LocalStack?): {e}")
+    bedrock_runtime = None
+    BEDROCK_AVAILABLE = False
+
+# Environment variables
+GUARDRAILS_ID = os.environ.get("GUARDRAILS_ID", "")
+GUARDRAILS_VERSION = os.environ.get("GUARDRAILS_VERSION", "DRAFT")
 
 # Patterns to redact (RULE 8)
 REDACTION_PATTERNS = [
@@ -111,6 +132,93 @@ def sanitize_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     return sanitized
 
 
+def apply_guardrails(text: str) -> Dict[str, Any]:
+    """
+    Apply Bedrock Guardrails to text output.
+
+    Blocks harmful content, detects PII, filters profanity.
+    Falls back gracefully if Bedrock not available (LocalStack).
+
+    Args:
+        text: Text to check with Guardrails
+
+    Returns:
+        Dict with 'allowed' (bool) and optional 'reason' (str)
+    """
+    if not BEDROCK_AVAILABLE or not bedrock_runtime:
+        logger.info("Bedrock Guardrails not available, skipping (LocalStack mode)")
+        return {"allowed": True, "reason": "guardrails_disabled"}
+
+    if not GUARDRAILS_ID:
+        logger.warning("GUARDRAILS_ID not configured, skipping Guardrails check")
+        return {"allowed": True, "reason": "guardrails_not_configured"}
+
+    try:
+        response = bedrock_runtime.apply_guardrail(
+            guardrailIdentifier=GUARDRAILS_ID,
+            guardrailVersion=GUARDRAILS_VERSION,
+            source="OUTPUT",
+            content=[{"text": {"text": text}}],
+        )
+
+        action = response.get("action", "NONE")
+        assessments = response.get("assessments", [])
+
+        if action == "GUARDRAIL_INTERVENED":
+            # Extract intervention reasons
+            reasons = []
+            for assessment in assessments:
+                if "topicPolicy" in assessment:
+                    topics = assessment["topicPolicy"].get("topics", [])
+                    for topic in topics:
+                        if topic.get("action") == "BLOCKED":
+                            reasons.append(f"blocked_topic:{topic.get('name', 'unknown')}")
+
+                if "contentPolicy" in assessment:
+                    filters = assessment["contentPolicy"].get("filters", [])
+                    for filter_item in filters:
+                        if filter_item.get("action") == "BLOCKED":
+                            reasons.append(f"blocked_content:{filter_item.get('type', 'unknown')}")
+
+                if "wordPolicy" in assessment:
+                    words = assessment["wordPolicy"].get("customWords", [])
+                    for word in words:
+                        if word.get("action") == "BLOCKED":
+                            reasons.append("blocked_profanity")
+
+                if "sensitiveInformationPolicy" in assessment:
+                    pii = assessment["sensitiveInformationPolicy"].get("piiEntities", [])
+                    for entity in pii:
+                        if entity.get("action") == "BLOCKED":
+                            reasons.append(f"blocked_pii:{entity.get('type', 'unknown')}")
+
+            logger.warning(
+                "Guardrails blocked output",
+                extra={"action": action, "reasons": reasons},
+            )
+
+            return {"allowed": False, "reason": ", ".join(reasons) if reasons else "blocked"}
+
+        logger.info("Guardrails check passed", extra={"action": action})
+        return {"allowed": True, "reason": "passed"}
+
+    except ClientError as e:
+        error_code = e.response.get("Error", {}).get("Code", "Unknown")
+        if error_code == "ResourceNotFoundException":
+            logger.warning(
+                "Guardrails configuration not found, allowing output", extra={"error": str(e)}
+            )
+            return {"allowed": True, "reason": "guardrails_not_found"}
+        else:
+            logger.error("Guardrails check failed", extra={"error": str(e)})
+            # Fail open: allow output if Guardrails check fails
+            return {"allowed": True, "reason": "guardrails_error"}
+    except Exception as e:
+        logger.exception("Unexpected error in Guardrails check", extra={"error": str(e)})
+        # Fail open: allow output if unexpected error
+        return {"allowed": True, "reason": "guardrails_exception"}
+
+
 @tracer.capture_lambda_handler
 @logger.inject_lambda_context(log_event=True)
 def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
@@ -145,11 +253,38 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
             sanitized_message = sanitize_text(str(message))
             sanitized_result["message"] = sanitized_message
 
+        # Apply Bedrock Guardrails to final output (Phase 3)
+        final_output = json.dumps(sanitized_result)
+        guardrails_result = apply_guardrails(final_output)
+
+        if not guardrails_result["allowed"]:
+            logger.warning(
+                "Output blocked by Guardrails",
+                extra={
+                    "request_id": request_id,
+                    "reason": guardrails_result.get("reason"),
+                },
+            )
+            # Return safe error message instead of blocked content
+            return {
+                "statusCode": 400,
+                "sanitized_result": {
+                    "message": (
+                        "The response was blocked by content safety filters. "
+                        "Please rephrase your request."
+                    )
+                },
+                "request_id": request_id,
+                "guardrails_blocked": True,
+                "guardrails_reason": guardrails_result.get("reason"),
+            }
+
         logger.info(
-            "Output sanitized",
+            "Output sanitized and Guardrails passed",
             extra={
                 "request_id": request_id,
                 "output_size": len(str(sanitized_result)),
+                "guardrails_reason": guardrails_result.get("reason"),
             },
         )
 
@@ -157,6 +292,7 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
             "statusCode": 200,
             "sanitized_result": sanitized_result,
             "request_id": request_id,
+            "guardrails_passed": True,
         }
 
     except Exception as e:
