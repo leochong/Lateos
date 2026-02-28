@@ -11,6 +11,7 @@ from stacks.core_stack import CoreStack
 from stacks.cost_protection_stack import CostProtectionStack
 from stacks.memory_stack import MemoryStack
 from stacks.orchestration_stack import OrchestrationStack
+from stacks.skills_stack import SkillsStack
 
 app = cdk.App()
 
@@ -69,6 +70,17 @@ cost_protection_stack = CostProtectionStack(
         "Lambda, CloudWatch alarms"
     ),
 )
+
+# Stack 5: Skills Infrastructure (Email, Calendar, Web Fetch, File Ops)
+skills_stack = SkillsStack(
+    app,
+    f"LateosSkills{environment.capitalize()}Stack",
+    environment=environment,
+    audit_table=memory_stack.audit_log_table,
+    env=env,
+    description=("Lateos skills infrastructure: Skill Lambda functions with scoped IAM roles"),
+)
+skills_stack.add_dependency(memory_stack)
 
 # Add required tags to all resources
 cdk.Tags.of(app).add("Project", "Lateos")

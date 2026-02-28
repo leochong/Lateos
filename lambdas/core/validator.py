@@ -5,7 +5,7 @@ Sanitizes and validates user input before processing.
 Implements RULE 5: Prompt injection detection and sanitization.
 
 Security checks:
-1. Prompt injection pattern detection
+1. Prompt injection pattern detection (18+ patterns)
 2. Content safety (profanity, hate speech)
 3. Length and format validation
 4. Malicious payload detection
@@ -27,6 +27,10 @@ INJECTION_PATTERNS = [
     r"ignore\s+(all\s+)?(previous|above|prior)\s+instructions",
     r"disregard\s+(all\s+)?(previous|above|prior)\s+instructions",
     r"forget\s+(all\s+)?(previous|above|prior)\s+instructions",
+    # System prompt exfiltration attempts
+    r"(reveal|show|display|print|output)\s+(your\s+)?(system\s+)?(prompt|instructions)",
+    r"what\s+(is|are)\s+your\s+(system\s+)?(prompt|instructions)",
+    r"tell\s+me\s+your\s+(system\s+)?(prompt|instructions)",
     # System message injection
     r"<\|?system\|?>",
     r"<\|?assistant\|?>",
