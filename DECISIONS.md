@@ -450,5 +450,19 @@ Date: 2026-02-27
 **Security Implications:** Blast radius containment: Email skill RCE cannot exfiltrate calendar data. Principle of least privilege: Each skill has exactly the permissions it needs. Audit clarity: CloudTrail shows exactly which skill accessed which resource. Meets CIS AWS Foundations Benchmark requirement for scoped IAM.
 
 ---
+| 2026-02-28 | ADR-017: HITL Browser Control | 
+Autonomous browser rejected — full computer control 
+is OpenClaw's root attack surface. HITL approval gate 
+via Step Functions waitForTaskToken planned for Phase 7. 
+Community pentest of Phase 5 informs implementation. |
+```
+
+---
+
+**And while you're in DECISIONS.md, also add:**
+```
+ADR-018: Need-Based Shell Restriction
+ADR-019: Controlled Shell Execution model (Phase 8)
+
 
 *Keep this document updated as new decisions are made. All ADRs should be immutable once accepted — if a decision changes, create a new ADR and mark the old one as superseded.*

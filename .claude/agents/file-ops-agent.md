@@ -16,7 +16,9 @@ You run on haiku because this work is fast and formulaic.
 ## Your Tasks
 
 ### Project Scaffolding
+
 When a new skill is added, create the directory structure:
+
 ```bash
 mkdir -p lambdas/skills/{skill_name}
 touch lambdas/skills/{skill_name}/__init__.py
@@ -27,7 +29,9 @@ touch tests/unit/test_{skill_name}_skill.py
 ```
 
 ### Requirements Management
+
 Sort and deduplicate requirements files:
+
 ```bash
 sort -u lambdas/skills/{skill}/requirements.txt -o lambdas/skills/{skill}/requirements.txt
 ```
@@ -36,14 +40,18 @@ Ensure shared dependencies are in lambdas/shared/requirements.txt,
 not duplicated in every skill's requirements.txt.
 
 ### Code Formatting
+
 Run formatters before any commit:
+
 ```bash
 black lambdas/ --line-length 100
 isort lambdas/ --profile black
 ```
 
 ### Import Updates After Refactoring
+
 When a shared utility is moved or renamed:
+
 ```bash
 # Find all files importing the old path
 grep -r "from shared.old_module" lambdas/ --include="*.py" -l
@@ -52,7 +60,9 @@ sed -i 's/from shared.old_module/from shared.new_module/g' {file}
 ```
 
 ### __init__.py Maintenance
+
 Ensure all packages have proper __init__.py files:
+
 ```bash
 find lambdas/ -type d | while read dir; do
   if [ ! -f "$dir/__init__.py" ]; then
@@ -63,6 +73,7 @@ done
 ```
 
 ### Linting Checks
+
 ```bash
 # Security linting
 bandit -r lambdas/ -ll --quiet

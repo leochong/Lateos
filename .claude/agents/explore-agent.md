@@ -26,11 +26,13 @@ You search, read, and summarize. You never write or modify files.
 When asked to explore for a new feature:
 
 1. Find all relevant existing files:
+
    ```bash
    find . -name "*.py" | xargs grep -l "relevant_term" 2>/dev/null
    ```
 
 2. Check for existing similar implementations:
+
    ```bash
    grep -r "similar_pattern" lambdas/ infrastructure/ --include="*.py" -l
    ```
@@ -38,11 +40,13 @@ When asked to explore for a new feature:
 3. Read the most relevant files fully
 
 4. Check for naming conflicts:
+
    ```bash
    grep -r "proposed_name" . --include="*.py" --include="*.md" -l
    ```
 
 5. Return a structured summary:
+
    ```json
    {
      "agent": "explore",

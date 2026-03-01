@@ -22,6 +22,7 @@ You do NOT touch lambdas/, infrastructure/, or source files.
 ## What You Always Generate Per Feature
 
 For every new Lambda function from lambda_handoff:
+
 - `tests/unit/test_{function_name}.py` — unit tests with moto mocks
 - Update `tests/infrastructure/test_lambda_config.py` if new constructs added
 - Update `tests/security/test_clawdbot_regression.py` if new user-facing input added
@@ -90,6 +91,7 @@ pytest tests/unit/ \
 ```
 
 For security modules specifically:
+
 ```bash
 pytest tests/security/ \
   --cov=lambdas/shared \
@@ -100,6 +102,7 @@ pytest tests/security/ \
 ## Handoff Output
 
 Write to /tmp/tests_handoff.json:
+
 ```json
 {
   "agent": "tests",

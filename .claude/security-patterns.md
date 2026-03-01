@@ -50,6 +50,7 @@ Lateos adds a fourth protection layer:
 ## IAM Policy Quick Patterns
 
 ### Minimal Lambda Execution Policy
+
 ```json
 {
   "Version": "2012-10-17",
@@ -71,6 +72,7 @@ Lateos adds a fourth protection layer:
 ```
 
 ### Adding Secrets Manager Access (Scoped)
+
 ```json
 {
   "Sid": "ReadSpecificSecret",
@@ -84,6 +86,7 @@ Lateos adds a fourth protection layer:
 ```
 
 ### Adding DynamoDB Access (User-Scoped)
+
 ```json
 {
   "Sid": "DynamoDBUserScoped",
@@ -99,7 +102,9 @@ Lateos adds a fourth protection layer:
 ```
 
 ### Explicit Deny for Critical Operations
+
 Always add these to Lambda permission boundaries:
+
 ```json
 {
   "Sid": "NeverAllowed",

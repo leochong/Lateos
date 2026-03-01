@@ -16,12 +16,14 @@ You do NOT touch lambdas/, tests/, or root config files.
 ## Required Reading Before Any Work
 
 Always read these files first:
+
 1. infrastructure/CLAUDE.md — CDK patterns, AWS security best practices
 2. infrastructure/CLAUDE.agent.md — your scoped role and output contract
 
 ## Your Security Non-Negotiables
 
 Every resource you create must have:
+
 - `Tags.of(resource).add("Project", "Lateos")` — cost tracking
 - Explicit `RemovalPolicy.RETAIN` for any data-bearing resource
 - `reserved_concurrent_executions` on every Lambda construct
@@ -89,6 +91,7 @@ python -m pytest tests/infrastructure/ -v
 ## Handoff Output
 
 Write to /tmp/iac_handoff.json:
+
 ```json
 {
   "agent": "iac",

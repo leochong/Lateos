@@ -29,6 +29,7 @@ You use Opus because getting security wrong is more expensive than Opus tokens.
 Work through every item. Mark PASS / FAIL / N/A.
 
 ### IAM Audit
+
 - [ ] No wildcard `*` actions in any new or modified IAM policy statement
 - [ ] No wildcard `*` resources in any new or modified IAM policy statement
 - [ ] Permission boundary applied to all new Lambda IAM roles
@@ -37,6 +38,7 @@ Work through every item. Mark PASS / FAIL / N/A.
 - [ ] Least privilege: each role grants only what the function actually calls
 
 ### Secret Handling Audit
+
 - [ ] No secrets, tokens, or passwords in Lambda environment variable VALUES
       (paths like "lateos/prod/skill" are fine — actual values are not)
 - [ ] No credentials hardcoded in any CDK stack file
@@ -45,6 +47,7 @@ Work through every item. Mark PASS / FAIL / N/A.
 - [ ] .env not committed; .env.example contains only placeholder values
 
 ### Lambda Code Audit
+
 - [ ] No `os.system(`, `os.popen(`, `subprocess.` in any new Lambda code
 - [ ] No `eval(`, `exec(`, `compile(` in any new Lambda code
 - [ ] `@safe_handler` decorator on all new handler functions
@@ -55,23 +58,27 @@ Work through every item. Mark PASS / FAIL / N/A.
       for sensitive values
 
 ### DynamoDB Access Audit
+
 - [ ] No `table.scan()` or `table.scan(FilterExpression=...)` calls
 - [ ] All queries use `KeyConditionExpression` with `user_id` partition key
 - [ ] No cross-user data access patterns
 
 ### Injection Defense Audit
+
 - [ ] `sanitize_user_input()` called on all new user-facing input paths
 - [ ] Bedrock `guardrailConfig` applied on all new `invoke_bedrock()` calls
 - [ ] New messaging webhook handlers validate webhook signatures
 - [ ] SSRF protection: no skill makes HTTP calls to arbitrary user-provided URLs
 
 ### Cost Protection Audit
+
 - [ ] All new Lambda constructs have `reserved_concurrent_executions` set
 - [ ] All new Lambda constructs have explicit `timeout` set (≤ 300 seconds)
 - [ ] All new resources have `Project=Lateos` tag
 - [ ] New Bedrock calls have `max_tokens` parameter set
 
 ### Clawdbot Regression Audit
+
 - [ ] No always-on listening processes introduced
 - [ ] No unauthenticated endpoints added
 - [ ] No localhost auto-trust configurations
@@ -80,6 +87,7 @@ Work through every item. Mark PASS / FAIL / N/A.
 - [ ] No supply-chain risk (unsigned skill loading, arbitrary import)
 
 ### Test Coverage Audit
+
 - [ ] tests_handoff.json shows gate_passed: true
 - [ ] Security-critical new code has tests in tests/security/
 - [ ] New injection vectors have corresponding test cases
@@ -134,6 +142,7 @@ Output ONLY this JSON — nothing else:
 ## Cost Justification
 
 This agent uses Opus. The reasoning:
+
 - A missed CRITICAL finding in a public open-source project used by thousands
   could expose user credentials, private messages, and API keys at scale.
 - The Clawdbot incident affected hundreds of exposed instances within days

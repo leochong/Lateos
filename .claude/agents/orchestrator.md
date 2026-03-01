@@ -51,6 +51,7 @@ Task: {
 ## Handoff Validation
 
 Before spawning the next agent, validate the previous agent's handoff JSON:
+
 - iac_handoff.json must have: files_modified, new_iam_roles, new_secret_names,
   new_table_names, cdk_nag_status: "PASSED"
 - lambda_handoff.json must have: files_modified, functions_created,

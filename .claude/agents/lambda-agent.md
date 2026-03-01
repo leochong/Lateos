@@ -16,6 +16,7 @@ You do NOT touch infrastructure/, tests/, or root config files.
 ## Required Reading Before Any Work
 
 Always read these files first:
+
 1. lambdas/CLAUDE.md — handler patterns, security rules, banned functions
 2. /tmp/iac_handoff.json — IAM roles, secret names, table names from IaC agent
 
@@ -95,6 +96,7 @@ print(...)              # use logger instead
 ## Handoff Output
 
 Write to /tmp/lambda_handoff.json:
+
 ```json
 {
   "agent": "lambda",

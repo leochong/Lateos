@@ -86,6 +86,7 @@ aws --profile localstack --endpoint-url=http://localhost:4566 s3 ls
 **Phase 1: Core Infrastructure (CDK Stacks)**
 
 Before starting Phase 1, you need:
+
 - [ ] LocalStack running (`docker-compose up -d`)
 - [ ] AWS CLI configured for LocalStack
 - [ ] SAM CLI installed and verified
@@ -94,6 +95,7 @@ Before starting Phase 1, you need:
 - [ ] Create `tests/infrastructure/` directory
 
 Phase 1 will create:
+
 - `infrastructure/app.py` — CDK app entry point
 - `infrastructure/stacks/core_stack.py` — API Gateway, Cognito, WAF (mocked in LocalStack)
 - `infrastructure/stacks/memory_stack.py` — DynamoDB tables, KMS keys
@@ -121,6 +123,7 @@ git status | grep -E "\\.env$|\\.pem$|\\.key$|secret|credential"
 ## 📊 Current Project State
 
 **What EXISTS now:**
+
 - Python virtual environment with all dependencies
 - Git repository with security-focused .gitignore
 - Configuration templates (.env.example)
@@ -129,6 +132,7 @@ git status | grep -E "\\.env$|\\.pem$|\\.key$|secret|credential"
 - Comprehensive Claude Code context files
 
 **What DOES NOT exist yet:**
+
 - No `infrastructure/` directory (Phase 1)
 - No `lambdas/` directory (Phase 2)
 - No `tests/` directory (Phase 1)
@@ -166,6 +170,7 @@ git status | grep -E "\\.env$|\\.pem$|\\.key$|secret|credential"
 Per the original kickstart prompt, Phase 0 includes MORE than what's done so far:
 
 **Still TODO to complete Phase 0:**
+
 - [ ] `.pre-commit-config.yaml` with security hooks
 - [ ] `cdk.json` for CDK configuration
 - [ ] `.github/workflows/ci.yml` — CI/CD pipeline
@@ -214,7 +219,7 @@ git show HEAD
 ## 🔗 Resources
 
 - **Project Lead:** Leo Chong (CISSP, AWS Cloud Practitioner, CCNA Security, NREMT)
-- **GitHub (future):** https://github.com/Leochong/lateos
+- **GitHub (future):** <https://github.com/Leochong/lateos>
 - **License:** MIT
 - **Architecture:** See CLAUDE.md for full context
 - **Decisions:** See DECISIONS.md for ADRs
