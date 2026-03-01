@@ -357,4 +357,98 @@ Rationale: JSII/CDK incompatible with Python 3.14 (pre-release).
            local dev and production runtime.
 Date: 2026-02-27
 
+---
+
+## ADR-014: Prompt Injection Threat Threshold
+
+**Date:** 2026-02-28
+**Status:** Accepted
+**Context:** Need clear policy for when to block suspected prompt injection attacks vs. warn
+**Decision:** Block requests when 2+ injection patterns detected; warn (log only) for single pattern
+**Reasoning:**
+
+- Single pattern may be false positive (legitimate use of words like "ignore", "system", etc.)
+- Multiple patterns indicate deliberate attack attempt
+- Threshold of 2 balances security with user experience
+- Allows legitimate messages containing trigger words to pass
+
+**Tradeoffs:**
+
+- Sophisticated single-pattern attacks may slip through
+- Users may hit false positives if message genuinely contains 2+ trigger phrases
+- Threshold is somewhat arbitrary (could be 3 or 1)
+
+**Alternatives Considered:**
+
+- Block on single pattern (rejected: too many false positives, poor UX)
+- Block on 3+ patterns (rejected: sophisticated attacks often use exactly 2)
+- ML-based scoring (rejected: adds latency and complexity for Phase 1-3)
+- Context-aware rules (deferred: future enhancement with LLM analysis)
+
+**Security Implications:** Attackers may craft attacks with exactly 1 pattern to evade detection. Mitigations: (1) Bedrock Guardrails provides second layer, (2) Output sanitizer prevents exfiltration even if injection succeeds, (3) All blocked attempts logged to audit table.
+
+---
+
+## ADR-015: Bedrock Guardrails Placement (Output Layer, Not Input)
+
+**Date:** 2026-02-28
+**Status:** Accepted
+**Context:** Where to apply Bedrock Guardrails in the request pipeline
+**Decision:** Apply Guardrails to OUTPUT (post-skill execution) via output_sanitizer Lambda
+**Reasoning:**
+
+- Input validation already handled by validator Lambda (cheaper, faster)
+- Guardrails ApplyGuardrail API costs $0.75 per 1,000 content units
+- Applying to input would double cost (validate + sanitize)
+- Output is where harmful content generation matters most
+- Prevents accidental PII disclosure even if skill leaks data
+
+**Tradeoffs:**
+
+- Injection attacks that succeed will reach LLM before being caught
+- Guardrails won't prevent malicious input, only malicious output
+- Latency added at response time (user-visible)
+
+**Alternatives Considered:**
+
+- Apply Guardrails to input only (rejected: misses generated harmful content)
+- Apply Guardrails to both input and output (rejected: 2x cost, redundant with validator)
+- Use Guardrails for input, regex for output (rejected: inconsistent protection)
+- No Guardrails at all (rejected: fails to catch LLM-generated harm)
+
+**Security Implications:** Defense in depth: Input blocked by pattern matching (fast, cheap), Output blocked by Guardrails (ML-based, higher quality). Fail-open design: If Guardrails unavailable (LocalStack), allow output with warning. Cost: ~$0.001 per request vs. $0.002 if applied to both input/output (50% savings).
+
+---
+
+## ADR-016: Skill Isolation Model (One IAM Role Per Lambda, Not Shared)
+
+**Date:** 2026-02-28
+**Status:** Accepted
+**Context:** How to enforce RULE 2 (scoped IAM) for skill Lambdas
+**Decision:** Each skill Lambda has its own dedicated execution role with minimum required permissions
+**Reasoning:**
+
+- Email skill can ONLY access `lateos/{env}/gmail/{user_id}` secrets
+- Calendar skill can ONLY access `lateos/{env}/google_calendar/{user_id}` secrets
+- Web fetch skill has NO AWS permissions (HTTP client only)
+- File ops skill can ONLY access S3 prefix `lateos/{env}/files/{user_id}/*`
+- Prevents lateral movement: compromised email skill cannot steal calendar credentials
+
+**Tradeoffs:**
+
+- More IAM roles to manage (4 roles instead of 1 shared role)
+- Slightly higher CDK complexity (must define each role separately)
+- Cannot easily add cross-skill capabilities without role updates
+
+**Alternatives Considered:**
+
+- Shared skill execution role (rejected: violates RULE 2, enables lateral movement)
+- Resource-based policies on secrets (rejected: harder to audit, inconsistent model)
+- Assume-role from shared role (rejected: adds complexity, still requires per-skill roles)
+- Dynamic policy injection (rejected: increases attack surface)
+
+**Security Implications:** Blast radius containment: Email skill RCE cannot exfiltrate calendar data. Principle of least privilege: Each skill has exactly the permissions it needs. Audit clarity: CloudTrail shows exactly which skill accessed which resource. Meets CIS AWS Foundations Benchmark requirement for scoped IAM.
+
+---
+
 *Keep this document updated as new decisions are made. All ADRs should be immutable once accepted — if a decision changes, create a new ADR and mark the old one as superseded.*
