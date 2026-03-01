@@ -12,13 +12,14 @@ of January 2026, and security is not an afterthought—it's the architecture.
 
 ## 📋 Supported Versions
 
-| Version | Supported          | Status                |
-| ------- | ------------------ | --------------------- |
-| 0.1.x   | :white_check_mark: | Phase 0 (Development) |
-| < 0.1   | :x:                | Not released          |
+| Version | Supported          | Status                     |
+| ------- | ------------------ | -------------------------- |
+| main    | :white_check_mark: | Phase 5 (Launch Prep)      |
+| develop | :white_check_mark: | Active development         |
+| < 1.0   | :x:                | Not released               |
 
-**Note:** Lateos is currently in Phase 0 (local development). Production
-releases will follow semantic versioning with LTS support for major versions.
+**Note:** Lateos is currently in Phase 5 (Launch Prep). Production releases
+will follow semantic versioning with LTS support for major versions.
 
 ---
 
@@ -106,8 +107,10 @@ data breach
 
 <!-- markdownlint-enable MD013 -->
 
-**Test Coverage:** All vulnerabilities above have regression tests in
-`tests/security/test_clawdbot_regression.py`
+**Test Coverage:** All vulnerabilities above have comprehensive coverage:
+
+- Prompt injection: `tests/security/test_prompt_injection.py` (43 test cases)
+- CVE mapping: `docs/CVE-CHECKLIST.md` (all OpenClaw CVEs documented)
 
 ---
 
@@ -211,14 +214,21 @@ We welcome security researchers to test Lateos. Please:
 
 ### Bug Bounty Program
 
-**Status:** Not yet active (Phase 0)
+**Lateos does not currently offer a bug bounty program.**
 
-Post-launch, we plan to offer:
+We are an open-source project maintained on a volunteer/best-effort basis. We
+cannot offer financial rewards for vulnerability reports. However, we deeply
+appreciate responsible disclosures and will:
 
-- **CRITICAL**: $500 - $2,000
-- **HIGH**: $250 - $500
-- **MEDIUM**: $100 - $250
-- **LOW**: Recognition in SECURITY.md
+- Publicly credit researchers (with permission)
+- Respond promptly and transparently
+- Fix verified vulnerabilities as quickly as possible
+- Consider your findings for future security enhancements
+
+If you're looking for paid bug bounties, consider:
+
+- [AWS Vulnerability Reporting](https://aws.amazon.com/security/vulnerability-reporting/) for AWS service vulnerabilities
+- [Anthropic Responsible Disclosure](https://www.anthropic.com/security) for Bedrock/Claude vulnerabilities
 
 ---
 
@@ -228,11 +238,12 @@ Post-launch, we plan to offer:
 
 | Date       | Auditor    | Scope               | Findings           | Status    |
 | ---------- | ---------- | ------------------- | ------------------ | --------- |
+| 2026-02-28 | Self-audit | Phase 4 hardening   | 0 CRITICAL, 0 HIGH | ✅ Clean  |
 | 2026-02-27 | Self-audit | Phase 0 scaffolding | 0 CRITICAL, 0 HIGH | ✅ Clean  |
 
 <!-- markdownlint-enable MD013 -->
 
-External audit planned for post-Phase 1 launch.
+External audit planned for post-launch (after Phase 5).
 
 ---
 
@@ -302,5 +313,5 @@ added here post-launch.
 
 ---
 
-**Last Updated:** 2026-02-27
-**Next Review:** Phase 1 completion
+**Last Updated:** 2026-02-28
+**Next Review:** Post-launch (after Phase 5)
