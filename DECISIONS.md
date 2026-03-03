@@ -450,19 +450,55 @@ Date: 2026-02-27
 **Security Implications:** Blast radius containment: Email skill RCE cannot exfiltrate calendar data. Principle of least privilege: Each skill has exactly the permissions it needs. Audit clarity: CloudTrail shows exactly which skill accessed which resource. Meets CIS AWS Foundations Benchmark requirement for scoped IAM.
 
 ---
-| 2026-02-28 | ADR-017: HITL Browser Control | 
-Autonomous browser rejected — full computer control 
-is OpenClaw's root attack surface. HITL approval gate 
-via Step Functions waitForTaskToken planned for Phase 7. 
+| 2026-02-28 | ADR-017: HITL Browser Control |
+Autonomous browser rejected — full computer control
+is OpenClaw's root attack surface. HITL approval gate
+via Step Functions waitForTaskToken planned for Phase 7.
 Community pentest of Phase 5 informs implementation. |
+
 ```
 
 ---
 
 **And while you're in DECISIONS.md, also add:**
 ```
+
 ADR-018: Need-Based Shell Restriction
 ADR-019: Controlled Shell Execution model (Phase 8)
 
+| 2026-02-28 | ADR-017: HITL Browser Control |
+Autonomous browser control rejected — full computer
+control is the root attack surface of OpenClaw
+(CVE-2026-25253, ClawJacked). HITL approval gate via
+Step Functions waitForTaskToken planned for Phase 7.
+Community pentest of Phase 5 public release informs
+implementation details. |
+
+| 2026-02-28 | ADR-018: Need-Based Shell Restriction |
+Shell execution excluded at launch — root cause of
+every major OpenClaw RCE exploit. Will be enabled in
+Phase 8 only when a validated skill task requires it,
+under strict constraints: command whitelist, ephemeral
+Lambda sandbox, HITL approval gate, no network access
+during execution, scoped S3 I/O only, full audit trail. |
+
+| 2026-02-28 | ADR-019: Living Validator Pattern Library |
+validator.py pattern list is community-extensible via
+PR. Every new pattern requires both a positive test
+case (should block) AND a negative test case (should
+not block legitimate input). Protects against evolving
+threat actor techniques including multi-language
+injection, encoding bypass, and payload fragmentation. |
+
+ADR-019: Living validator pattern library
+Decision: validator.py pattern list is community-extensible
+          via PR with mandatory test case requirement
+Rationale: Threat actors evolve faster than any single
+           developer can track. Community-sourced patterns
+           with mandatory test coverage creates a living
+           defense layer.
+Security gate: Every new pattern requires a positive test
+               case (should block) AND a negative test case
+               (should not block legitimate input)
 
 *Keep this document updated as new decisions are made. All ADRs should be immutable once accepted — if a decision changes, create a new ADR and mark the old one as superseded.*

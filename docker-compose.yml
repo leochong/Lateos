@@ -4,14 +4,15 @@ services:
   localstack:
     container_name: lateos-localstack
     image: localstack/localstack:latest
+    privileged: true
     ports:
       - "4566:4566"            # LocalStack Gateway
       - "4510-4559:4510-4559"  # External services port range
     environment:
       # Core LocalStack Configuration
-      - SERVICES=lambda,dynamodb,s3,secretsmanager,iam,sts,stepfunctions,apigateway,cognito-idp,kms,cloudwatch,logs,events,sns,sqs
+      - SERVICES=lambda,dynamodb,s3,secretsmanager,iam,sts,stepfunctions,apigateway,cognito-idp,kms,cloudwatch,logs,events,sns,sqs,ssm,cloudformation
       - DEBUG=0
-      - LAMBDA_EXECUTOR=docker
+      - LAMBDA_EXECUTOR=local
       - DOCKER_HOST=unix:///var/run/docker.sock
       - LOCALSTACK_HOST=localhost:4566
 

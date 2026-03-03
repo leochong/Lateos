@@ -167,7 +167,10 @@ def test_orchestrator_lambda_invocation(aws_clients, lambda_functions):
 
     result = json.loads(response["Payload"].read())
     assert result["statusCode"] == 200, "Orchestrator should process valid requests"
-    assert "user_id" in result, "Result should contain user_id"
+    # user_id is in the body metadata
+    body = json.loads(result["body"])
+    assert "metadata" in body, "Result should contain metadata"
+    assert "user_id" in body["metadata"], "Metadata should contain user_id"
 
 
 def test_email_skill_lambda(aws_clients, lambda_functions):

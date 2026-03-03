@@ -451,9 +451,9 @@ export default function LateosRoadmap() {
                 WHY NOT OPENCLAW'S APPROACH
               </div>
               <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", lineHeight: 1.8 }}>
-                OpenClaw allows agents to write arbitrary cron expressions to disk files — a prompt injection time-bomb. 
-                A single injection attack can schedule malicious future tasks indefinitely. Lateos Phase 6 implements 
-                the same autonomous scheduling capability using EventBridge + an approved intent whitelist stored in 
+                OpenClaw allows agents to write arbitrary cron expressions to disk files — a prompt injection time-bomb.
+                A single injection attack can schedule malicious future tasks indefinitely. Lateos Phase 6 implements
+                the same autonomous scheduling capability using EventBridge + an approved intent whitelist stored in
                 DynamoDB. Same power. Zero arbitrary code scheduling.
               </div>
             </div>

@@ -26,6 +26,7 @@ from aws_cdk import aws_kms as kms
 from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_s3 as s3
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
 from constructs import Construct
 
 
@@ -67,7 +68,7 @@ class SkillsStack(Stack):
             removal_policy=(
                 RemovalPolicy.DESTROY if self.env_name == "dev" else RemovalPolicy.RETAIN
             ),
-            auto_delete_objects=self.env_name == "dev",
+            auto_delete_objects=False,
         )
 
         # Create skill Lambdas with scoped IAM roles
@@ -155,14 +156,15 @@ class SkillsStack(Stack):
         role = self._create_lambda_role("Email", policy_statements)
 
         # Create Lambda function
-        email_lambda = lambda_.Function(
+        email_lambda = PythonFunction(
             self,
             "LateosEmailSkill",
+            entry="lambdas/skills",
+            index="email_skill.py",
+            handler="lambda_handler",
             function_name=f"lateos-{self.env_name}-email-skill",
             description="Email skill: Gmail OAuth integration (scoped IAM)",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="email_skill.lambda_handler",
-            code=lambda_.Code.from_asset("lambdas/skills"),
             role=role,
             timeout=Duration.seconds(30),
             memory_size=512,
@@ -204,14 +206,15 @@ class SkillsStack(Stack):
 
         role = self._create_lambda_role("Calendar", policy_statements)
 
-        calendar_lambda = lambda_.Function(
+        calendar_lambda = PythonFunction(
             self,
             "LateosCalendarSkill",
+            entry="lambdas/skills",
+            index="calendar_skill.py",
+            handler="lambda_handler",
             function_name=f"lateos-{self.env_name}-calendar-skill",
             description="Calendar skill: Google Calendar API integration (scoped IAM)",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="calendar_skill.lambda_handler",
-            code=lambda_.Code.from_asset("lambdas/skills"),
             role=role,
             timeout=Duration.seconds(30),
             memory_size=512,
@@ -243,14 +246,15 @@ class SkillsStack(Stack):
 
         role = self._create_lambda_role("WebFetch", policy_statements)
 
-        web_fetch_lambda = lambda_.Function(
+        web_fetch_lambda = PythonFunction(
             self,
             "LateosWebFetchSkill",
+            entry="lambdas/skills",
+            index="web_fetch_skill.py",
+            handler="lambda_handler",
             function_name=f"lateos-{self.env_name}-web-fetch-skill",
             description="Web fetch skill: HTTP client with domain whitelist (scoped IAM)",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="web_fetch_skill.lambda_handler",
-            code=lambda_.Code.from_asset("lambdas/skills"),
             role=role,
             timeout=Duration.seconds(60),  # Longer timeout for HTTP requests
             memory_size=512,
@@ -311,16 +315,17 @@ class SkillsStack(Stack):
 
         role = self._create_lambda_role("FileOps", policy_statements)
 
-        file_ops_lambda = lambda_.Function(
+        file_ops_lambda = PythonFunction(
             self,
             "LateosFileOpsSkill",
+            entry="lambdas/skills",
+            index="file_ops_skill.py",
+            handler="lambda_handler",
             function_name=f"lateos-{self.env_name}-file-ops-skill",
             description=(
                 "File operations skill: S3-backed storage with per-user isolation " "(scoped IAM)"
             ),
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="file_ops_skill.lambda_handler",
-            code=lambda_.Code.from_asset("lambdas/skills"),
             role=role,
             timeout=Duration.seconds(60),
             memory_size=1024,  # Higher memory for file operations

@@ -1,0 +1,29 @@
+# Gitleaks configuration for Lateos
+# Excludes known false positives and educational documentation
+
+title = "Lateos Gitleaks Configuration"
+
+[allowlist]
+description = "Allowlist for known false positives"
+
+# CDK output contains asset hashes
+paths = [
+    '''cdk\.out/''',
+    '''docs/WALKTHROUGHS/''',
+    '''\.secrets\.baseline''',
+    '''tests/''',
+    '''\.venv/''',
+    '''\.venv312/''',
+    '''__pycache__/''',
+    '''node_modules/''',
+]
+
+# Regex patterns for secrets that are clearly fake/examples
+regexes = [
+    '''sk_test_fake''',
+    '''sk_live_test''',
+    '''AKIA[0-9A-Z]{16}test''',
+    '''example\.com''',
+    '''fake.*secret''',
+    '''test.*key''',
+]

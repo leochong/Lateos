@@ -36,7 +36,9 @@ __pycache__/
 *.so
 .Python
 .venv/
+.venv*/
 venv/
+venv*/
 ENV/
 env/
 build/
@@ -67,6 +69,7 @@ htmlcov/
 .localstack/
 volume/
 localstack-data/
+mnt/
 
 # ===== IDE =====
 .vscode/
@@ -97,3 +100,20 @@ yarn.lock
 .tmp/
 tmp/
 temp/
+
+# ===== Temporary/Planning Files =====
+# Root-level temporary test files
+/test_*.py
+
+# Old status/planning documents
+*-STATUS.md
+*-COMPLETE.md
+*-PLAN.md
+*-kickstart*.md
+*-project-tree*.md
+*-complete-*.tar.gz
+*-SUMMARY.md
+
+# Exceptions (keep these specific files)
+!STATUS.md
+!tests/**/test_*.py

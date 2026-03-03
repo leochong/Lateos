@@ -44,6 +44,7 @@ GUARDRAILS_VERSION = os.environ.get("GUARDRAILS_VERSION", "DRAFT")
 # Patterns to redact (RULE 8)
 REDACTION_PATTERNS = [
     # API keys and tokens
+    (r"\bsk-[A-Za-z0-9]{16,}\b", "***REDACTED_API_KEY***"),  # OpenAI-style keys
     (r"\b[A-Za-z0-9]{32,}\b", "***REDACTED_TOKEN***"),
     (r'api[_-]?key["\']?\s*[:=]\s*["\']?([A-Za-z0-9_\-]+)', "api_key: ***REDACTED***"),
     (r'token["\']?\s*[:=]\s*["\']?([A-Za-z0-9_\-\.]+)', "token: ***REDACTED***"),

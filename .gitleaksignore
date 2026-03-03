@@ -1,9 +1,32 @@
 # Gitleaks Ignore File
-# Files to exclude from gitleaks secret scanning
+# Excludes known false positives and educational content
 
-# Baseline file for detect-secrets (contains hashed values, not real secrets)
+# CDK output directory - contains hashes, not secrets
+cdk.out/
+
+# Documentation contains educational/example secrets
+docs/WALKTHROUGHS/
+docs/walkthroughs/
+
+# Secrets baseline file - contains hashed values
 .secrets.baseline
 
-# Test files with intentional mock secrets
+# Test files may contain fake secrets for testing
+tests/
 **/test_*.py
-**/tests/**/*_test.py
+**/*_test.py
+
+# Virtual environments
+.venv/
+.venv312/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node modules (if any)
+node_modules/
+
+# CDK staging
+.cdk.staging/

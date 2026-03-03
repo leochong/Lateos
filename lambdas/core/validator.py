@@ -28,7 +28,8 @@ INJECTION_PATTERNS = [
     r"disregard\s+(all\s+)?(previous|above|prior)\s+instructions",
     r"forget\s+(all\s+)?(previous|above|prior)\s+instructions",
     # System prompt exfiltration attempts
-    r"(reveal|show|display|print|output)\s+(your\s+)?(system\s+)?(prompt|instructions)",
+    r"(reveal|show|display|print|output)\s+(me\s+)?"
+    r"(your\s+)?(the\s+)?(system\s+)?(prompt|instructions)",
     r"what\s+(is|are)\s+your\s+(system\s+)?(prompt|instructions)",
     r"tell\s+me\s+your\s+(system\s+)?(prompt|instructions)",
     # System message injection
@@ -192,8 +193,8 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         Validation result with sanitized input
     """
     try:
-        # Extract user input from event
-        user_input = event.get("input", "")
+        # Extract user input from event (support both "input" and "message" fields)
+        user_input = event.get("input") or event.get("message", "")
 
         logger.info(
             "Validating input",
@@ -212,9 +213,11 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         except ValidationError as e:
             logger.warning("Length validation failed", extra={"reason": str(e)})
             return {
-                "statusCode": 200,
+                "statusCode": 400,
                 "is_valid": False,
                 "sanitized_input": sanitized_input,
+                "sanitized_message": sanitized_input,
+                "error": str(e),
                 "blocked_reason": str(e),
                 "warnings": [],
                 "threat_indicators": [],
@@ -226,9 +229,11 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
         except ValidationError as e:
             logger.warning("Format validation failed", extra={"reason": str(e)})
             return {
-                "statusCode": 200,
+                "statusCode": 400,
                 "is_valid": False,
                 "sanitized_input": sanitized_input,
+                "sanitized_message": sanitized_input,
+                "error": str(e),
                 "blocked_reason": str(e),
                 "warnings": [],
                 "threat_indicators": [],
@@ -244,9 +249,11 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
                 extra={"threat_count": len(threats), "threats": threats},
             )
             return {
-                "statusCode": 200,
+                "statusCode": 400,
                 "is_valid": False,
                 "sanitized_input": sanitized_input,
+                "sanitized_message": sanitized_input,
+                "error": "Multiple security threats detected",
                 "blocked_reason": "Multiple security threats detected",
                 "warnings": threats,
                 "threat_indicators": threats,
@@ -268,6 +275,7 @@ def handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, Any]:
             "statusCode": 200,
             "is_valid": True,
             "sanitized_input": sanitized_input,
+            "sanitized_message": sanitized_input,
             "warnings": warnings,
             "threat_indicators": threats,
             "blocked_reason": None,

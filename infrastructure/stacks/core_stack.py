@@ -49,6 +49,10 @@ class CoreStack(Stack):
         if waf_enabled is None:
             waf_enabled = False
 
+        # Detect LocalStack environment (for testing without Cognito)
+        # LocalStack Community Edition doesn't fully support Cognito User Pools
+        is_localstack = self.account == "000000000000"
+
         # KMS key for CloudWatch Logs encryption (RULE 8)
         self.log_encryption_key = kms.Key(
             self,
@@ -117,62 +121,70 @@ class CoreStack(Stack):
         )
 
         # Cognito User Pool with MFA enforcement (RULE 3)
-        self.user_pool = cognito.UserPool(
-            self,
-            "LateosUserPool",
-            user_pool_name=f"lateos-{environment}-users",
-            self_sign_up_enabled=False,  # Admin-only user creation
-            sign_in_aliases=cognito.SignInAliases(
-                email=True,
-                username=False,  # Email is the username
-            ),
-            auto_verify=cognito.AutoVerifiedAttrs(email=True),
-            password_policy=cognito.PasswordPolicy(
-                min_length=16,
-                require_lowercase=True,
-                require_uppercase=True,
-                require_digits=True,
-                require_symbols=True,
-                temp_password_validity=Duration.days(1),
-            ),
-            mfa=cognito.Mfa.REQUIRED if cognito_mfa_setting == "REQUIRED" else cognito.Mfa.OPTIONAL,
-            mfa_second_factor=cognito.MfaSecondFactor(
-                sms=True,
-                otp=True,  # TOTP (time-based one-time password)
-            ),
-            account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
-            advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED,
-            removal_policy=RemovalPolicy.RETAIN,  # Never delete user data
-        )
-
-        # Cognito User Pool Client
-        self.user_pool_client = cognito.UserPoolClient(
-            self,
-            "LateosUserPoolClient",
-            user_pool=self.user_pool,
-            user_pool_client_name=f"lateos-{environment}-client",
-            generate_secret=True,  # OAuth client secret
-            auth_flows=cognito.AuthFlow(
-                user_password=True,
-                user_srp=True,  # Secure Remote Password
-                custom=False,  # No custom auth for security
-            ),
-            o_auth=cognito.OAuthSettings(
-                flows=cognito.OAuthFlows(
-                    authorization_code_grant=True,
-                    implicit_code_grant=False,  # Not secure
+        # Skip Cognito in LocalStack (Community Edition doesn't support it fully)
+        self.user_pool = None
+        self.user_pool_client = None
+        if not is_localstack:
+            self.user_pool = cognito.UserPool(
+                self,
+                "LateosUserPool",
+                user_pool_name=f"lateos-{environment}-users",
+                self_sign_up_enabled=False,  # Admin-only user creation
+                sign_in_aliases=cognito.SignInAliases(
+                    email=True,
+                    username=False,  # Email is the username
                 ),
-                scopes=[
-                    cognito.OAuthScope.OPENID,
-                    cognito.OAuthScope.EMAIL,
-                    cognito.OAuthScope.PROFILE,
-                ],
-            ),
-            access_token_validity=Duration.hours(1),
-            id_token_validity=Duration.hours(1),
-            refresh_token_validity=Duration.days(30),
-            prevent_user_existence_errors=True,
-        )
+                auto_verify=cognito.AutoVerifiedAttrs(email=True),
+                password_policy=cognito.PasswordPolicy(
+                    min_length=16,
+                    require_lowercase=True,
+                    require_uppercase=True,
+                    require_digits=True,
+                    require_symbols=True,
+                    temp_password_validity=Duration.days(1),
+                ),
+                mfa=(
+                    cognito.Mfa.REQUIRED
+                    if cognito_mfa_setting == "REQUIRED"
+                    else cognito.Mfa.OPTIONAL
+                ),
+                mfa_second_factor=cognito.MfaSecondFactor(
+                    sms=True,
+                    otp=True,  # TOTP (time-based one-time password)
+                ),
+                account_recovery=cognito.AccountRecovery.EMAIL_ONLY,
+                advanced_security_mode=cognito.AdvancedSecurityMode.ENFORCED,
+                removal_policy=RemovalPolicy.RETAIN,  # Never delete user data
+            )
+
+            # Cognito User Pool Client
+            self.user_pool_client = cognito.UserPoolClient(
+                self,
+                "LateosUserPoolClient",
+                user_pool=self.user_pool,
+                user_pool_client_name=f"lateos-{environment}-client",
+                generate_secret=True,  # OAuth client secret
+                auth_flows=cognito.AuthFlow(
+                    user_password=True,
+                    user_srp=True,  # Secure Remote Password
+                    custom=False,  # No custom auth for security
+                ),
+                o_auth=cognito.OAuthSettings(
+                    flows=cognito.OAuthFlows(
+                        authorization_code_grant=True,
+                        implicit_code_grant=False,  # Not secure
+                    ),
+                    scopes=[
+                        cognito.OAuthScope.OPENID,
+                        cognito.OAuthScope.EMAIL,
+                        cognito.OAuthScope.PROFILE,
+                    ],
+                ),
+                access_token_validity=Duration.hours(1),
+                id_token_validity=Duration.hours(1),
+                refresh_token_validity=Duration.days(30),
+                prevent_user_existence_errors=True,
+            )
 
         # API Gateway REST API
         self.api = apigw.RestApi(
@@ -213,13 +225,16 @@ class CoreStack(Stack):
 
         # Cognito Authorizer for API Gateway (RULE 3: no public endpoints)
         # Note: Authorizer will be attached when OrchestrationStack adds API methods
-        self.authorizer = apigw.CognitoUserPoolsAuthorizer(
-            self,
-            "LateosApiAuthorizer",
-            cognito_user_pools=[self.user_pool],
-            authorizer_name=f"lateos-{environment}-authorizer",
-            identity_source="method.request.header.Authorization",
-        )
+        # Skip in LocalStack (Cognito not supported)
+        self.authorizer = None
+        if not is_localstack and self.user_pool:
+            self.authorizer = apigw.CognitoUserPoolsAuthorizer(
+                self,
+                "LateosApiAuthorizer",
+                cognito_user_pools=[self.user_pool],
+                authorizer_name=f"lateos-{environment}-authorizer",
+                identity_source="method.request.header.Authorization",
+            )
 
         # Create a placeholder root resource to satisfy CDK (methods added in OrchestrationStack)
         self.api.root.add_method(
@@ -239,7 +254,7 @@ class CoreStack(Stack):
                 request_templates={"application/json": '{"statusCode": 200}'},
             ),
             method_responses=[{"statusCode": "200"}],
-            authorizer=self.authorizer,
+            authorizer=self.authorizer,  # None in LocalStack, allows unauthenticated testing
         )
 
         # Request Validator for API Gateway (input validation)
@@ -334,21 +349,23 @@ class CoreStack(Stack):
             )
 
         # Outputs
-        CfnOutput(
-            self,
-            "UserPoolId",
-            value=self.user_pool.user_pool_id,
-            description="Cognito User Pool ID",
-            export_name=f"lateos-{environment}-user-pool-id",
-        )
+        if self.user_pool:
+            CfnOutput(
+                self,
+                "UserPoolId",
+                value=self.user_pool.user_pool_id,
+                description="Cognito User Pool ID",
+                export_name=f"lateos-{environment}-user-pool-id",
+            )
 
-        CfnOutput(
-            self,
-            "UserPoolClientId",
-            value=self.user_pool_client.user_pool_client_id,
-            description="Cognito User Pool Client ID",
-            export_name=f"lateos-{environment}-user-pool-client-id",
-        )
+        if self.user_pool_client:
+            CfnOutput(
+                self,
+                "UserPoolClientId",
+                value=self.user_pool_client.user_pool_client_id,
+                description="Cognito User Pool Client ID",
+                export_name=f"lateos-{environment}-user-pool-client-id",
+            )
 
         CfnOutput(
             self,

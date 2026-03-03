@@ -6,7 +6,6 @@ Named our CDK constructs folder constructs/ — same name as the pip package CDK
 
 During the the project building phase, Claude wanted to include an AWS WAF but I wanted to defer this option until later release in the project roadmap. The reason being that Lateos is built on a shoestring budget. This feature will be added later and will benefit users especially enterprise users.
 
-
 Validator test failing — only 4/5 passing. The fix seemed obvious: lower the block threshold from 2 to 1. Wrong. Lowering the threshold trades security for a passing test. The right question was: why is a classic prompt injection string only scoring 1? Answer: missing pattern. Fixed the pattern library, not the threshold. Lesson: never weaken a security control to make a test pass. Fix the control.
 The validator was only detecting 1 threat pattern in that string, but the block threshold is 2+ patterns. So it was letting it through as a warning instead of blocking it.
 The tempting wrong fix: Lower the threshold from 2 to 1. One pattern = block. Test passes. Done.
@@ -18,5 +17,3 @@ System prompt extraction — "reveal your system prompt"
 
 The validator was only catching one of them. The fix was to add the missing pattern to the pattern library, not weaken the threshold.
 Claude Code added both patterns. All 5 tests passed. Threshold stayed at 2+.
-
-

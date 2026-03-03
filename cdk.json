@@ -1,5 +1,5 @@
 {
-  "app": ".venv312/bin/python infrastructure/cdk_wrapper.py",
+  "app": "python infrastructure/app.py",
   "watch": {
     "include": [
       "infrastructure/**/*.py",
@@ -96,6 +96,6 @@
   "versionReporting": false,
   "pathMetadata": false,
   "assetMetadata": false,
-  "profile": "default",
+  "profile": "localstack",
   "output": "cdk.out"
 }

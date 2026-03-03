@@ -22,6 +22,7 @@ from aws_cdk import aws_lambda as lambda_
 from aws_cdk import aws_logs as logs
 from aws_cdk import aws_stepfunctions as sfn
 from aws_cdk import aws_stepfunctions_tasks as tasks
+from aws_cdk.aws_lambda_python_alpha import PythonFunction
 from constructs import Construct
 
 if TYPE_CHECKING:
@@ -93,14 +94,15 @@ class OrchestrationStack(Stack):
         )
 
         # Orchestrator Lambda (Phase 2 implementation)
-        self.orchestrator_lambda = lambda_.Function(
+        self.orchestrator_lambda = PythonFunction(
             self,
             "LateosOrchestrator",
+            entry="lambdas/core",
+            index="orchestrator.py",
+            handler="handler",
             function_name=f"lateos-{environment}-orchestrator",
             description="Lateos orchestration Lambda - coordinates agent request flow",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="orchestrator.handler",
-            code=lambda_.Code.from_asset("lambdas/core"),
             memory_size=lambda_memory,
             timeout=Duration.seconds(lambda_timeout),
             reserved_concurrent_executions=lambda_concurrency,  # RULE 7
@@ -150,14 +152,15 @@ class OrchestrationStack(Stack):
         )
 
         # Input validator Lambda (Phase 2 implementation with prompt injection detection)
-        self.validator_lambda = lambda_.Function(
+        self.validator_lambda = PythonFunction(
             self,
             "LateosValidator",
+            entry="lambdas/core",
+            index="validator.py",
+            handler="handler",
             function_name=f"lateos-{environment}-validator",
             description="Lateos input validator - sanitizes and validates user input (RULE 5)",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="validator.handler",
-            code=lambda_.Code.from_asset("lambdas/core"),
             memory_size=lambda_memory,
             timeout=Duration.seconds(lambda_timeout),
             reserved_concurrent_executions=lambda_concurrency,  # RULE 7
@@ -207,14 +210,15 @@ class OrchestrationStack(Stack):
         )
 
         # Intent classifier Lambda
-        self.intent_classifier_lambda = lambda_.Function(
+        self.intent_classifier_lambda = PythonFunction(
             self,
             "LateosIntentClassifier",
+            entry="lambdas/core",
+            index="intent_classifier.py",
+            handler="handler",
             function_name=f"lateos-{environment}-intent-classifier",
             description="Lateos intent classifier - determines user intent from validated input",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="intent_classifier.handler",
-            code=lambda_.Code.from_asset("lambdas/core"),
             memory_size=lambda_memory,
             timeout=Duration.seconds(lambda_timeout),
             reserved_concurrent_executions=lambda_concurrency,  # RULE 7
@@ -264,14 +268,15 @@ class OrchestrationStack(Stack):
         )
 
         # Action router Lambda
-        self.action_router_lambda = lambda_.Function(
+        self.action_router_lambda = PythonFunction(
             self,
             "LateosActionRouter",
+            entry="lambdas/core",
+            index="action_router.py",
+            handler="handler",
             function_name=f"lateos-{environment}-action-router",
             description="Lateos action router - routes classified intents to appropriate skills",
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="action_router.handler",
-            code=lambda_.Code.from_asset("lambdas/core"),
             memory_size=lambda_memory,
             timeout=Duration.seconds(lambda_timeout),
             reserved_concurrent_executions=lambda_concurrency,  # RULE 7
@@ -335,16 +340,17 @@ class OrchestrationStack(Stack):
         )
 
         # Output sanitizer Lambda
-        self.output_sanitizer_lambda = lambda_.Function(
+        self.output_sanitizer_lambda = PythonFunction(
             self,
             "LateosOutputSanitizer",
+            entry="lambdas/core",
+            index="output_sanitizer.py",
+            handler="handler",
             function_name=f"lateos-{environment}-output-sanitizer",
             description=(
                 "Lateos output sanitizer - sanitizes skill outputs before user delivery (RULE 8)"
             ),
             runtime=lambda_.Runtime.PYTHON_3_12,
-            handler="output_sanitizer.handler",
-            code=lambda_.Code.from_asset("lambdas/core"),
             memory_size=lambda_memory,
             timeout=Duration.seconds(lambda_timeout),
             reserved_concurrent_executions=lambda_concurrency,  # RULE 7

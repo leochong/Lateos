@@ -6,6 +6,8 @@ Instantiates all infrastructure stacks for the Lateos AI Personal Agent.
 Stacks are deployed in dependency order.
 """
 
+import os
+
 import aws_cdk as cdk
 from stacks.core_stack import CoreStack
 from stacks.cost_protection_stack import CostProtectionStack
@@ -22,7 +24,7 @@ resource_tags = app.node.try_get_context("resource_tags") or {}
 
 # Define stack environment
 env = cdk.Environment(
-    account=None,  # Use default account from AWS credentials
+    account=os.environ.get("AWS_ACCOUNT_ID", "000000000000"),
     region=aws_region,
 )
 
