@@ -1,0 +1,71 @@
+{
+  "mcpServers": {
+    "lateos": {
+      "url": "https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/mcp",
+      "authentication": {
+        "type": "bearer",
+        "token": "YOUR_COGNITO_ID_TOKEN_HERE"
+      },
+      "description": "Lateos AI Personal Agent - Secure email, calendar, and task management",
+      "capabilities": {
+        "tools": true
+      },
+      "timeout": 30000,
+      "retries": 3
+    }
+  },
+  "instructions": {
+    "setup": [
+      "1. Authenticate with Cognito:",
+      "   aws cognito-idp initiate-auth \\",
+      "     --auth-flow USER_PASSWORD_AUTH \\",
+      "     --client-id YOUR_CLIENT_ID \\",
+      "     --auth-parameters USERNAME=YOUR_USERNAME,PASSWORD=YOUR_PASSWORD \\",
+      "     --profile lateos-prod",
+      "",
+      "2. Copy the IdToken from the response",
+      "",
+      "3. Replace YOUR_COGNITO_ID_TOKEN_HERE with the actual token",
+      "",
+      "4. Token expires after 1 hour - re-authenticate as needed",
+      "",
+      "5. Available tool: lateos_email_summary",
+      "   - max_emails: 1-50 (default: 10)",
+      "   - summary_style: brief | detailed | action_items",
+      "   - filter: { sender, subject_contains, since_hours }"
+    ],
+    "security_notes": [
+      "✅ All communication over HTTPS with API Gateway",
+      "✅ Cognito JWT authentication enforced",
+      "✅ Per-user data isolation via DynamoDB partition keys",
+      "✅ All actions audited to lateos-prod-audit-logs table",
+      "✅ Scoped IAM permissions (email_skill invoke only)",
+      "✅ No shell execution, no wildcard permissions",
+      "✅ Secrets in AWS Secrets Manager (not in code)",
+      "✅ KMS encryption at rest for all DynamoDB tables"
+    ],
+    "production_endpoints": {
+      "api_gateway": "https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod",
+      "mcp_endpoint": "https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/mcp",
+      "cognito_user_pool": "us-east-1_wXBwAxBod",
+      "region": "us-east-1"
+    },
+    "example_usage": {
+      "description": "Once configured in Claude Desktop, you can use:",
+      "prompts": [
+        "Summarize my last 10 emails",
+        "Show me action items from my recent emails",
+        "Give me a detailed summary of emails from alice@example.com",
+        "What emails have I received in the last 6 hours?"
+      ]
+    }
+  },
+  "metadata": {
+    "version": "1.0.0",
+    "protocol_version": "2024-11-05",
+    "created": "2026-03-08",
+    "project": "Lateos",
+    "repository": "https://github.com/leochong/Lateos",
+    "license": "MIT"
+  }
+}
