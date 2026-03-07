@@ -44,11 +44,13 @@ class OrchestrationStack(Stack):
         construct_id: str,
         core_stack: "CoreStack",
         skills_stack: Optional["SkillsStack"] = None,
+        audit_table=None,
         **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         self.skills_stack = skills_stack
+        self.audit_table = audit_table
 
         # Get configuration from cdk.json context
         environment = self.node.try_get_context("environment") or "dev"
@@ -369,6 +371,71 @@ class OrchestrationStack(Stack):
             log_retention=logs.RetentionDays.ONE_MONTH,
         )
 
+        # MCP Handler Lambda role (RULE 2: scoped permissions)
+        mcp_handler_role = iam.Role(
+            self,
+            "LateosMCPHandlerRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            description="Execution role for Lateos MCP handler Lambda",
+            role_name=f"lateos-{environment}-mcp-handler-role",
+        )
+
+        # Grant CloudWatch Logs permissions
+        mcp_handler_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AllowCloudWatchLogs",
+                actions=[
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                ],
+                resources=[
+                    f"arn:aws:logs:{self.region}:{self.account}:log-group:"
+                    f"/aws/lambda/lateos-{environment}-mcp-handler:*"
+                ],
+            )
+        )
+
+        # Grant X-Ray tracing permissions
+        mcp_handler_role.add_to_policy(
+            iam.PolicyStatement(
+                sid="AllowXRayTracing",
+                actions=[
+                    "xray:PutTraceSegments",
+                    "xray:PutTelemetryRecords",
+                ],
+                resources=["*"],  # X-Ray requires wildcard per AWS documentation
+            )
+        )
+
+        # MCP Handler Lambda
+        # Note: Environment variables EMAIL_SKILL_FUNCTION_NAME and AUDIT_TABLE_NAME
+        # will be added after skills_stack is available (end of __init__)
+        self.mcp_handler_lambda = PythonFunction(
+            self,
+            "LateosMCPHandler",
+            entry="lambdas/core",
+            index="mcp_handler.py",
+            handler="lambda_handler",
+            function_name=f"lateos-{environment}-mcp-handler",
+            description="Lateos MCP protocol handler - exposes skills via MCP for Claude Desktop",
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            memory_size=lambda_memory,
+            timeout=Duration.seconds(lambda_timeout),
+            reserved_concurrent_executions=lambda_concurrency,  # RULE 7
+            role=mcp_handler_role,
+            tracing=lambda_.Tracing.ACTIVE,
+            environment={
+                "ENVIRONMENT": environment,
+                "LOG_LEVEL": "INFO",
+                "POWERTOOLS_SERVICE_NAME": "mcp-handler",
+            },
+            log_retention=logs.RetentionDays.ONE_MONTH,
+        )
+
+        # Store MCP handler role for later permission grants
+        self.mcp_handler_role = mcp_handler_role
+
         # Step Functions execution role
         sfn_role = iam.Role(
             self,
@@ -657,6 +724,65 @@ class OrchestrationStack(Stack):
             request_validator=core_stack.request_validator,
         )
 
+        # Add MCP endpoint integration
+        # Grant MCP handler permissions to invoke email_skill and write to audit table
+        if self.skills_stack is not None and hasattr(self.skills_stack, "email_skill"):
+            # Grant permission to invoke email_skill
+            self.mcp_handler_role.add_to_policy(
+                iam.PolicyStatement(
+                    sid="AllowInvokeEmailSkill",
+                    actions=["lambda:InvokeFunction"],
+                    resources=[self.skills_stack.email_skill.function_arn],
+                )
+            )
+
+            # Add email_skill function name to environment
+            self.mcp_handler_lambda.add_environment(
+                "EMAIL_SKILL_FUNCTION_NAME",
+                self.skills_stack.email_skill.function_name,
+            )
+
+            # Grant permission to write to audit table
+            if self.audit_table is not None:
+                self.audit_table.grant_write_data(self.mcp_handler_lambda)
+                self.mcp_handler_lambda.add_environment(
+                    "AUDIT_TABLE_NAME",
+                    self.audit_table.table_name,
+                )
+
+        # Create /mcp POST endpoint (Cognito-protected)
+        mcp_resource = core_stack.api.root.add_resource("mcp")
+
+        # API Gateway role to invoke MCP handler Lambda
+        api_mcp_role = iam.Role(
+            self,
+            "LateosApiMCPRole",
+            assumed_by=iam.ServicePrincipal("apigateway.amazonaws.com"),
+            description="API Gateway role to invoke MCP handler Lambda",
+        )
+
+        api_mcp_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["lambda:InvokeFunction"],
+                resources=[self.mcp_handler_lambda.function_arn],
+            )
+        )
+
+        # Lambda integration for MCP handler
+        mcp_integration = apigw.LambdaIntegration(
+            self.mcp_handler_lambda,
+            credentials_role=api_mcp_role,
+            proxy=True,
+        )
+
+        # Add POST /mcp endpoint (Cognito-protected, same auth as /agent)
+        mcp_resource.add_method(
+            "POST",
+            mcp_integration,
+            authorizer=core_stack.authorizer,
+            request_validator=core_stack.request_validator,
+        )
+
         # Outputs
         CfnOutput(
             self,
@@ -704,4 +830,12 @@ class OrchestrationStack(Stack):
             value=self.output_sanitizer_lambda.function_arn,
             description="Output sanitizer Lambda function ARN",
             export_name=f"lateos-{environment}-output-sanitizer-arn",
+        )
+
+        CfnOutput(
+            self,
+            "MCPHandlerFunctionArn",
+            value=self.mcp_handler_lambda.function_arn,
+            description="MCP handler Lambda function ARN",
+            export_name=f"lateos-{environment}-mcp-handler-arn",
         )

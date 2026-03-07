@@ -83,10 +83,11 @@ orchestration_stack = OrchestrationStack(
     f"LateosOrchestration{environment.capitalize()}Stack",
     core_stack=core_stack,
     skills_stack=skills_stack,
+    audit_table=memory_stack.audit_log_table,
     env=env,
     description=(
         "Lateos orchestration infrastructure: Step Functions Express "
-        "Workflows, Lambda orchestration"
+        "Workflows, Lambda orchestration, MCP protocol handler"
     ),
 )
 orchestration_stack.add_dependency(skills_stack)
