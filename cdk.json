@@ -96,6 +96,5 @@
   "versionReporting": false,
   "pathMetadata": false,
   "assetMetadata": false,
-  "profile": "localstack",
   "output": "cdk.out"
 }
