@@ -2,11 +2,11 @@
 
 ## Design Philosophy
 
-Lateos is built on a fundamental security-first principle: **Lambda functions do not listen.** There are no open ports, no admin panels exposed to the internet, no persistent processes that can be compromised. This design directly addresses the root cause of the January 2026 Clawdbot/Moltbot security crisis, where hundreds of instances leaked credentials because they ran as always-on services.
+Lateos is built on a fundamental security-first principle: **Lambda functions do not listen.** There are no open ports, no admin panels exposed to the internet, no persistent processes that can be compromised. This design directly addresses the root cause of the January 2026 OpenClaw security crisis (also known as Clawdbot/Moltbot), where hundreds of instances leaked credentials because they ran as always-on services.
 
 ### Core Architectural Insights
 
-1. **Serverless = No Persistent Attack Surface**: Every Lateos component is stateless and ephemeral. Lambdas invoke, execute, and terminate. There is no listener port, no daemon process, no admin panel — eliminating entire categories of attack vectors that plagued Clawdbot.
+1. **Serverless = No Persistent Attack Surface**: Every Lateos component is stateless and ephemeral. Lambdas invoke, execute, and terminate. There is no listener port, no daemon process, no admin panel — eliminating entire categories of attack vectors that plagued OpenClaw.
 
 2. **Security by Default, Not Bolted On**: Rather than retrofitting security onto a monolithic service, security is baked into the architecture from the foundational layer:
    - Every Lambda has a dedicated, scoped IAM role (RULE 2)

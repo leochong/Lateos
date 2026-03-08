@@ -5,13 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Overview
 
 Lateos is a security-by-design AI personal agent built on AWS serverless
-architecture. It was created in direct response to the Clawdbot/Moltbot security
+architecture. It was created in direct response to the OpenClaw security
 crisis of January 2026, where hundreds of publicly exposed instances leaked API
 keys, OAuth tokens, private messages, and credentials.
 
 **The core architectural insight:** Lambda functions do not listen. There are no
 open ports, no admin panels exposed to the internet, no localhost trust
-assumptions. Every flaw in Clawdbot is eliminated by the serverless model itself.
+assumptions. Every flaw in OpenClaw is eliminated by the serverless model itself.
 
 **Project lead:** Leo (CISSP, AWS Cloud Practitioner, CCNA Security, NREMT)
 **AI assistance credit:** Architecture and design developed with assistance from
@@ -123,7 +123,7 @@ lateos/
 ├── README.md                    # Project overview and setup
 ├── SECURITY.md                  # Security policy and reporting
 ├── PENTEST-GUIDE.md            # Penetration testing guide
-├── FEB-28-QUICK-START.md       # Quick start guide for Feb 28 launch
+├── QUICK-START.md              # Quick start guide
 ├── .gitignore                   # Secret protection patterns
 ├── .env.example                 # Configuration template
 ├── cdk.json                     # CDK app config
@@ -465,9 +465,9 @@ The `README.md` in `.claude/commands/` documents custom slash commands like `/ne
 
 ---
 
-## Clawdbot Regression — What We Explicitly Prevent
+## OpenClaw Regression — What We Explicitly Prevent
 
-These are the documented Clawdbot/Moltbot vulnerabilities.
+These are the documented OpenClaw vulnerabilities (OpenClaw was also known as Clawdbot/Moltbot during the January 2026 security crisis).
 `tests/security/test_clawdbot_regression.py` tests all of these:
 
 | CVE / Issue | Root Cause | Lateos Prevention |

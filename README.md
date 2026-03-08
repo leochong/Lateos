@@ -43,7 +43,7 @@ Lateos is an **open-source AI personal agent** built on AWS serverless architect
 
 ## Why Lateos Exists
 
-In **January 2026**, the **Clawdbot/Moltbot security crisis** exposed systemic failures in AI agent security:
+In **January 2026**, the **OpenClaw security crisis** (also known as Clawdbot/Moltbot) exposed systemic failures in AI agent security:
 
 - **1,247 API keys** leaked from exposed admin panels
 - **$50,000+ in fraud** from stolen Anthropic credentials
@@ -97,7 +97,7 @@ pre-commit install --hook-type commit-msg
 
 # Verify setup
 cdk synth          # Should synthesize all 5 stacks
-pytest tests/ -v   # Run test suite (73 tests pass, 1 skipped)
+pytest tests/ -v   # Run test suite (59 tests pass, 12 skipped, 7 errors when LocalStack not running)
 ```
 
 ### Deploy to LocalStack (Recommended First Step)

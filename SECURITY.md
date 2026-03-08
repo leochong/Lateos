@@ -3,8 +3,8 @@
 ## 🔒 Security Commitment
 
 Lateos is built with security as the foundational design principle. This
-project was created in direct response to the Clawdbot/Moltbot security crisis
-of January 2026, and security is not an afterthought—it's the architecture.
+project was created in direct response to the OpenClaw security crisis
+(also known as Clawdbot/Moltbot) of January 2026, and security is not an afterthought—it's the architecture.
 
 **Project Lead:** Leo Chong (CISSP, AWS Cloud Practitioner, CCNA Security, NREMT)
 

@@ -284,14 +284,14 @@ nslookup lateos.ai
 
 ---
 
-### =� Wave 1 LinkedIn Post Reviewed and Ready
+### [WAVE 1] Wave 1 LinkedIn Post Reviewed and Ready
 
 **Draft LinkedIn announcement:**
 
 ```markdown
-=� Introducing Lateos: Security-By-Design AI Personal Agent
+ Introducing Lateos: Security-By-Design AI Personal Agent
 
-After the Clawdbot/Moltbot security crisis exposed 1,247 leaked API keys and $50K in fraud, I built Lateos to prove AI agents can be secure from day one.
+After the OpenClaw security crisis (also known as Clawdbot/Moltbot) exposed 1,247 leaked API keys and $50K in fraud, I built Lateos to prove AI agents can be secure from day one.
 
 = What makes Lateos different:
 " Serverless architecture (no listening processes = no RCE)
@@ -301,13 +301,13 @@ After the Clawdbot/Moltbot security crisis exposed 1,247 leaked API keys and $50
 " Scoped IAM roles (one per skill, no wildcasts)
 " Open-source, MIT licensed
 
-=� Full transparency:
+ Full transparency:
 " Security policy: github.com/Leochong/lateos/SECURITY.md
 " CVE checklist: github.com/Leochong/lateos/docs/CVE-CHECKLIST.md
 " Pentest guide: github.com/Leochong/lateos/PENTEST-GUIDE.md
 " Design decisions: github.com/Leochong/lateos/DECISIONS.md
 
-=� Built by: Leo Chong (CISSP, AWS Cloud Practitioner, CCNA Security)
+ Built by: Leo Chong (CISSP, AWS Cloud Practitioner, CCNA Security)
 = GitHub: github.com/Leochong/lateos
 < Docs: lateos.ai
 
@@ -330,7 +330,7 @@ Security researchers welcome. No bug bounty (yet), but I respond to every report
 
 ---
 
-### =� Phase 5.5 Documentation Sprint Complete
+### [PHASE 5.5] Phase 5.5 Documentation Sprint Complete
 
 **Documentation to finalize before public launch:**
 
@@ -406,7 +406,7 @@ If critical issues are discovered post-launch:
 
    ```markdown
    # Pin to GitHub repo
-   � NOTICE: Lateos is temporarily offline while we address [issue].
+   [!] NOTICE: Lateos is temporarily offline while we address [issue].
    Expected resolution: [timeframe]
    Security impact: [assessment]
    ```
