@@ -725,21 +725,21 @@ class OrchestrationStack(Stack):
         )
 
         # Add MCP endpoint integration
-        # Grant MCP handler permissions to invoke email_skill and write to audit table
-        if self.skills_stack is not None and hasattr(self.skills_stack, "email_skill"):
-            # Grant permission to invoke email_skill
+        # Grant MCP handler permissions to invoke email_summary_skill and write to audit table
+        if self.skills_stack is not None and hasattr(self.skills_stack, "email_summary_skill"):
+            # Grant permission to invoke email_summary_skill
             self.mcp_handler_role.add_to_policy(
                 iam.PolicyStatement(
-                    sid="AllowInvokeEmailSkill",
+                    sid="AllowInvokeEmailSummarySkill",
                     actions=["lambda:InvokeFunction"],
-                    resources=[self.skills_stack.email_skill.function_arn],
+                    resources=[self.skills_stack.email_summary_skill.function_arn],
                 )
             )
 
-            # Add email_skill function name to environment
+            # Add email_summary_skill function name to environment
             self.mcp_handler_lambda.add_environment(
                 "EMAIL_SKILL_FUNCTION_NAME",
-                self.skills_stack.email_skill.function_name,
+                self.skills_stack.email_summary_skill.function_name,
             )
 
             # Grant permission to write to audit table

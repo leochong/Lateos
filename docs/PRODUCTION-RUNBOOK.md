@@ -218,6 +218,7 @@ aws cloudwatch get-metric-statistics \
 ### Key Metrics to Monitor
 
 **Lambda Invocations:**
+
 ```bash
 aws cloudwatch get-metric-statistics \
   --profile lateos-prod \
@@ -231,6 +232,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Lambda Duration (p99):**
+
 ```bash
 aws cloudwatch get-metric-statistics \
   --profile lateos-prod \
@@ -245,6 +247,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **API Gateway Requests:**
+
 ```bash
 aws cloudwatch get-metric-statistics \
   --profile lateos-prod \
@@ -258,6 +261,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **DynamoDB Read/Write Capacity:**
+
 ```bash
 aws cloudwatch get-metric-statistics \
   --profile lateos-prod \
@@ -326,12 +330,15 @@ aws cloudwatch put-metric-alarm \
 ### High Error Rate (>5%)
 
 **Symptoms:**
+
 - Lambda error metrics spike
 - CloudWatch alarm triggered
 - User reports of failures
 
 **Diagnosis:**
+
 1. Check CloudWatch Logs for recent errors:
+
    ```bash
    aws logs filter-log-events \
      --profile lateos-prod \
@@ -345,6 +352,7 @@ aws cloudwatch put-metric-alarm \
 3. Review recent deployments (if error started after deployment)
 
 **Resolution:**
+
 - If code bug: Roll back to previous version
 - If dependency issue: Check Lambda layer compatibility
 - If AWS service issue: Check AWS Service Health Dashboard
@@ -352,10 +360,12 @@ aws cloudwatch put-metric-alarm \
 ### API Gateway Throttling (429 Errors)
 
 **Symptoms:**
+
 - Users receiving 429 errors
 - High request rate in metrics
 
 **Diagnosis:**
+
 ```bash
 aws cloudwatch get-metric-statistics \
   --profile lateos-prod \
@@ -369,6 +379,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Resolution:**
+
 - Review throttling settings in API Gateway
 - Consider increasing rate limits (if legitimate traffic)
 - Implement client-side retry with exponential backoff
@@ -376,11 +387,14 @@ aws cloudwatch get-metric-statistics \
 ### Lambda Timeout Errors
 
 **Symptoms:**
+
 - Lambda execution exceeds timeout
 - Task timed out messages in logs
 
 **Diagnosis:**
+
 1. Check average duration:
+
    ```bash
    aws cloudwatch get-metric-statistics \
      --profile lateos-prod \
@@ -396,6 +410,7 @@ aws cloudwatch get-metric-statistics \
 2. Review logs for slow operations (database queries, API calls)
 
 **Resolution:**
+
 - Increase Lambda timeout (up to 15 minutes for standard, 5 minutes for Express Step Functions)
 - Optimize slow code paths
 - Consider async processing for long operations
@@ -403,10 +418,12 @@ aws cloudwatch get-metric-statistics \
 ### Bedrock Quota Exceeded
 
 **Symptoms:**
+
 - ThrottlingException in orchestrator logs
 - Bedrock API calls failing
 
 **Diagnosis:**
+
 ```bash
 aws logs filter-log-events \
   --profile lateos-prod \
@@ -416,6 +433,7 @@ aws logs filter-log-events \
 ```
 
 **Resolution:**
+
 - Request quota increase via AWS Service Quotas
 - Implement exponential backoff retry logic
 - Consider rate limiting at application layer
@@ -423,10 +441,12 @@ aws logs filter-log-events \
 ### Cost Alarm Triggered
 
 **Symptoms:**
+
 - SNS alert received
 - Budget threshold exceeded
 
 **Diagnosis:**
+
 ```bash
 # Check recent costs
 aws ce get-cost-and-usage \
@@ -439,6 +459,7 @@ aws ce get-cost-and-usage \
 ```
 
 **Resolution:**
+
 - Identify cost driver (Lambda invocations, DynamoDB, data transfer)
 - Manually trigger killswitch if needed (see Cost Management section)
 - Investigate anomalous usage patterns
@@ -447,10 +468,12 @@ aws ce get-cost-and-usage \
 ### Security Alert (GuardDuty Finding)
 
 **Symptoms:**
+
 - GuardDuty finding notification
 - Unusual activity detected
 
 **Diagnosis:**
+
 ```bash
 aws guardduty list-findings \
   --profile lateos-prod \
@@ -460,6 +483,7 @@ aws guardduty list-findings \
 ```
 
 **Resolution:**
+
 1. Review finding details
 2. Rotate compromised credentials immediately
 3. Review CloudTrail for suspicious activity
@@ -529,6 +553,7 @@ aws apigateway get-stage \
 ### Optimize Costs
 
 **Reduce Lambda Memory (if over-provisioned):**
+
 ```bash
 # Check current memory usage in CloudWatch
 aws cloudwatch get-metric-statistics \
@@ -543,6 +568,7 @@ aws cloudwatch get-metric-statistics \
 ```
 
 **Reduce Log Retention:**
+
 ```bash
 # Set retention to 7 days for non-critical logs
 aws logs put-retention-policy \
@@ -564,14 +590,14 @@ aws secretsmanager list-secrets \
   --output table
 ```
 
-### Create New Secret
+### Create New Secret  <!-- pragma: allowlist secret -->
 
 ```bash
 aws secretsmanager create-secret \
   --profile lateos-prod \
   --name lateos/prod/telegram \
   --description "Telegram bot token for production" \
-  --secret-string '{"bot_token":"YOUR_BOT_TOKEN_HERE"}'
+  --secret-string '{"bot_token":"YOUR_BOT_TOKEN_HERE"}'  # pragma: allowlist secret
 ```
 
 ### Update Existing Secret
@@ -677,16 +703,18 @@ aws lambda remove-permission \
 ## Emergency Contacts
 
 **Project Lead:** Leo (@leochong)
-**Repository:** https://github.com/leochong/Lateos
+**Repository:** <https://github.com/leochong/Lateos>
 **AWS Account ID:** 080746528746
 
 **Escalation Path:**
+
 1. Check CloudWatch Logs and Metrics
 2. Review incident response procedures above
 3. If unable to resolve, contact project lead
 4. For security incidents, follow SECURITY.md reporting procedures
 
 **AWS Support:**
+
 - Developer Support: Available via AWS Console
 - Severity: Use appropriate severity level (Critical for outages)
 

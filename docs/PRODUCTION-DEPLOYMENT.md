@@ -15,6 +15,7 @@
 Lateos successfully deployed to production AWS account 080746528746 on March 5, 2026. All 5 CloudFormation stacks deployed successfully with zero errors.
 
 **Deployment Timeline:**
+
 - 19:15:49 UTC - LateosMemoryProdStack deployed
 - 19:16:54 UTC - LateosSkillsProdStack deployed
 - 19:18:45 UTC - LateosOrchestrationProdStack deployed
@@ -47,6 +48,7 @@ Before deploying Lateos to production, ensure the following:
    - MFA: Enabled
 
 3. **AWS CLI Configuration:**
+
    ```bash
    aws configure --profile lateos-prod
    # AWS Access Key ID: [from IAM user]
@@ -76,6 +78,7 @@ cdk bootstrap aws://080746528746/us-east-1 --profile lateos-prod
 ```
 
 **Output:**
+
 - Stack: CDKToolkit
 - Status: CREATE_COMPLETE
 - S3 Bucket: cdk-hnb659fds-assets-080746528746-us-east-1
@@ -88,6 +91,7 @@ cdk synth --profile lateos-prod
 ```
 
 **Output:**
+
 - CloudFormation templates in `cdk.out/`
 - Lambda bundling via Docker (Python 3.12)
 - Zero synthesis errors
@@ -105,6 +109,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
 ```
 
 **Stack Deployment Order:**
+
 1. LateosMemoryProdStack (DynamoDB, KMS)
 2. LateosSkillsProdStack (4 skill Lambdas)
 3. LateosOrchestrationProdStack (5 core Lambdas, Step Functions)
@@ -120,6 +125,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
 ### 1. LateosMemoryProdStack
 
 **DynamoDB Tables (4):**
+
 - `lateos-prod-conversations`
   - Partition Key: `user_id` (String)
   - Sort Key: `conversation_id` (String)
@@ -145,6 +151,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
   - Billing: PAY_PER_REQUEST
 
 **KMS Key:**
+
 - Key ID: 2cf9d762-b499-49fc-8a77-441366222295
 - Alias: lateos-prod-encryption-key
 - Usage: DynamoDB table encryption
@@ -152,6 +159,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
 ### 2. LateosSkillsProdStack
 
 **Lambda Functions (4):**
+
 - `lateos-prod-email-skill`
   - Runtime: Python 3.12
   - Memory: 256 MB
@@ -178,12 +186,14 @@ cdk deploy --all --profile lateos-prod --require-approval never
   - Size: 23.2 MB
 
 **IAM Roles:**
+
 - Each skill has a dedicated execution role with scoped permissions
 - No wildcard (*) actions or resources (RULE 2 compliance)
 
 ### 3. LateosOrchestrationProdStack
 
 **Lambda Functions (5):**
+
 - `lateos-prod-orchestrator`
   - Runtime: Python 3.12
   - Memory: 512 MB
@@ -215,6 +225,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
   - Size: 23.2 MB
 
 **Step Functions State Machine:**
+
 - Name: `lateos-prod-workflow`
 - Type: EXPRESS
 - ARN: arn:aws:states:us-east-1:080746528746:stateMachine:lateos-prod-workflow
@@ -225,18 +236,21 @@ cdk deploy --all --profile lateos-prod --require-approval never
 ### 4. LateosCoreProdStack
 
 **API Gateway:**
+
 - Name: `lateos-prod-api`
 - API ID: `sys7fksdeg`
 - Type: REST API
 - Stage: `prod`
-- Endpoint: https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
+- Endpoint: <https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/>
 - Deployment: d83mxq
 - Created: 2026-03-06T04:20:25+09:00
 
 **Endpoints:**
+
 - POST /agent - Main agent interaction endpoint
 
 **Cognito User Pool:**
+
 - Name: `lateos-prod-users`
 - Pool ID: `us-east-1_wXBwAxBod`
 - Client ID: `25agb4frh560e49jmj2lvmln4s`
@@ -245,6 +259,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
 - Created: 2026-03-06T04:20:44.746+09:00
 
 **Authentication:**
+
 - Supported Flows:
   - ALLOW_USER_PASSWORD_AUTH
   - ALLOW_USER_SRP_AUTH
@@ -255,6 +270,7 @@ cdk deploy --all --profile lateos-prod --require-approval never
 ### 5. LateosCostProtectionProdStack
 
 **AWS Budget:**
+
 - Name: `lateos-prod-monthly-budget`
 - Limit: $10.00 USD/month
 - Time Unit: MONTHLY
@@ -263,11 +279,13 @@ cdk deploy --all --profile lateos-prod --require-approval never
   - 100% threshold ($10.00)
 
 **SNS Topic:**
+
 - Name: `lateos-prod-cost-alerts`
 - ARN: arn:aws:sns:us-east-1:080746528746:lateos-prod-cost-alerts
 - Purpose: Cost alert notifications and killswitch triggers
 
 **Killswitch Lambda:**
+
 - Name: `lateos-prod-killswitch`
 - Runtime: Python 3.12
 - Memory: 128 MB
@@ -395,6 +413,7 @@ The following secrets need to be configured for full functionality:
 **Estimated Monthly Cost:** ~$5-7 USD (well under $10 budget)
 
 **Primary Cost Drivers:**
+
 - DynamoDB on-demand billing
 - Lambda invocations (minimal - no traffic yet)
 - CloudWatch Logs storage
@@ -405,27 +424,33 @@ The following secrets need to be configured for full functionality:
 ## Security Validation
 
 ### ✅ RULE 1: No Secrets in Code
+
 - All secrets configured via AWS Secrets Manager
 - Zero hardcoded credentials in Lambda code
 
 ### ✅ RULE 2: No Wildcard IAM Permissions
+
 - Each Lambda has scoped execution role
 - No `*` actions or resources in policies
 
 ### ✅ RULE 3: No Public Endpoints
+
 - API Gateway requires Cognito authentication
 - All DynamoDB tables are private
 - No public S3 buckets
 
 ### ✅ RULE 6: Per-User Data Isolation
+
 - All DynamoDB tables use `user_id` as partition key
 - Cross-user queries prevented at data model level
 
 ### ✅ DynamoDB Encryption
+
 - All 4 tables encrypted with KMS
 - KMS key: arn:aws:kms:us-east-1:080746528746:key/2cf9d762-b499-49fc-8a77-441366222295
 
 ### ✅ Cost Protection
+
 - AWS Budget: $10/month limit
 - SNS alerts configured
 - Killswitch Lambda ready to disable API Gateway
@@ -501,7 +526,7 @@ cdk deploy --all --profile lateos-prod
 ## Contact
 
 **Project Lead:** Leo (@leochong)
-**Repository:** https://github.com/leochong/Lateos
+**Repository:** <https://github.com/leochong/Lateos>
 **License:** MIT
 
 ---

@@ -12,6 +12,7 @@
 Validate production AWS deployment (account 080746528746) and ensure all infrastructure is operational, secure, and ready for real-world usage.
 
 **Deployment Details:**
+
 - AWS Account: 080746528746
 - IAM User: Lateos-Admin
 - Profile: lateos-prod
@@ -28,6 +29,7 @@ Validate production AWS deployment (account 080746528746) and ensure all infrast
 ### 🔴 Critical Priority - Core Functionality
 
 #### Task 1: Integration Tests Against Production
+
 - [ ] Configure test environment for production AWS
   - [ ] Set AWS_PROFILE=lateos-prod in test config
   - [ ] Update test fixtures with production resource ARNs
@@ -52,6 +54,7 @@ Validate production AWS deployment (account 080746528746) and ensure all infrast
   - [ ] Any failures or warnings
 
 **Acceptance Criteria:**
+
 - ✅ 90%+ tests passing (some may require secrets setup)
 - ✅ Zero security test failures
 - ✅ All Lambda functions invocable
@@ -59,10 +62,11 @@ Validate production AWS deployment (account 080746528746) and ensure all infrast
 ---
 
 #### Task 2: API Gateway + Cognito Authentication Flow
+
 - [ ] Create test user in Cognito User Pool
   - [ ] Pool ID: us-east-1_wXBwAxBod
   - [ ] Client ID: 25agb4frh560e49jmj2lvmln4s
-  - [ ] Username: test-user@lateos.local
+  - [ ] Username: <test-user@lateos.local>
   - [ ] Enable MFA
 - [ ] Test authentication flow
   - [ ] Sign up new user
@@ -86,12 +90,14 @@ Validate production AWS deployment (account 080746528746) and ensure all infrast
   - [ ] Create user management guide
 
 **Acceptance Criteria:**
+
 - ✅ User can authenticate and get valid tokens
 - ✅ API Gateway enforces Cognito authentication
 - ✅ Request validation working correctly
 - ✅ Rate limiting active
 
 **API Endpoint:**
+
 ```
 https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ```
@@ -99,6 +105,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 3: Step Functions Workflow with Real Bedrock
+
 - [ ] Get Step Functions state machine ARN
   - [ ] `aws stepfunctions list-state-machines --profile lateos-prod`
   - [ ] Confirm lateos-prod-orchestration exists
@@ -114,7 +121,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Verify orchestrator invokes Bedrock correctly
   - [ ] Check output sanitizer redacts secrets
 - [ ] Test skill routing
-  - [ ] Request: "Send an email to test@example.com"
+  - [ ] Request: "Send an email to <test@example.com>"
   - [ ] Verify intent classifier identifies email intent
   - [ ] Verify action router invokes email skill Lambda
   - [ ] Check conversation stored in DynamoDB
@@ -128,6 +135,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Error rates by state
 
 **Acceptance Criteria:**
+
 - ✅ Workflow executes end-to-end successfully
 - ✅ Bedrock integration working
 - ✅ All states transition correctly
@@ -138,6 +146,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ### 🟡 High Priority - Operational Validation
 
 #### Task 4: CloudWatch Logs + X-Ray Tracing
+
 - [ ] Verify CloudWatch log groups exist
   - [ ] `/aws/lambda/lateos-prod-*` (10 log groups)
   - [ ] `/aws/apigateway/lateos-prod-api`
@@ -165,6 +174,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Common queries for troubleshooting
 
 **Acceptance Criteria:**
+
 - ✅ All log groups active and receiving data
 - ✅ Logs are encrypted with KMS
 - ✅ No secrets visible in logs
@@ -173,6 +183,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 5: Cost Protection & Budget Alerts
+
 - [ ] Verify AWS Budget created
   - [ ] `aws budgets describe-budgets --account-id 080746528746 --profile lateos-prod`
   - [ ] Budget name: lateos-prod-monthly-budget
@@ -199,6 +210,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Cost monitoring best practices
 
 **Acceptance Criteria:**
+
 - ✅ AWS Budget configured and active
 - ✅ SNS alerts configured
 - ✅ Killswitch Lambda can disable API Gateway
@@ -207,6 +219,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 6: Per-Skill Lambda Testing
+
 - [ ] Test Email Skill (lateos-prod-email-skill)
   - [ ] Invoke directly with test payload
   - [ ] Verify Gmail OAuth integration (requires secrets)
@@ -244,6 +257,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Memory usage and cold start metrics
 
 **Acceptance Criteria:**
+
 - ✅ All 4 skill Lambdas invocable
 - ✅ IAM roles properly scoped (no wildcards)
 - ✅ Skills requiring secrets fail gracefully
@@ -254,6 +268,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ### 🟢 Medium Priority - Documentation & Operations
 
 #### Task 7: DynamoDB Encryption + Access Patterns
+
 - [ ] Verify DynamoDB tables exist
   - [ ] lateos-prod-agent-memory
   - [ ] lateos-prod-audit-logs
@@ -284,6 +299,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Access patterns and query examples
 
 **Acceptance Criteria:**
+
 - ✅ All 4 tables encrypted with KMS
 - ✅ Point-in-time recovery enabled
 - ✅ Per-user data isolation verified (RULE 6)
@@ -292,6 +308,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 8: Production Deployment Documentation
+
 - [ ] Create PRODUCTION-DEPLOYMENT.md
   - [ ] Document deployment date and time
   - [ ] List all stacks deployed
@@ -324,6 +341,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Commit with message: "docs: Phase 8 production deployment documentation"
 
 **Acceptance Criteria:**
+
 - ✅ Complete deployment documentation exists
 - ✅ Future deployments can follow this process
 - ✅ All resource identifiers documented
@@ -332,6 +350,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 9: Production Operations Runbook
+
 - [ ] Create PRODUCTION-RUNBOOK.md
   - [ ] Document common operational tasks
   - [ ] Include troubleshooting procedures
@@ -377,6 +396,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Commit with message: "docs: Phase 8 production operations runbook"
 
 **Acceptance Criteria:**
+
 - ✅ Comprehensive runbook covers common scenarios
 - ✅ Incident response procedures documented
 - ✅ Operations team can use without prior knowledge
@@ -385,6 +405,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
 ---
 
 #### Task 10: CloudWatch Monitoring Dashboards
+
 - [ ] Create CloudWatch Dashboard: lateos-prod-overview
   - [ ] API Gateway metrics
     - [ ] Request count (per minute)
@@ -444,6 +465,7 @@ https://sys7fksdeg.execute-api.us-east-1.amazonaws.com/prod/
   - [ ] Document deployment via CDK (future enhancement)
 
 **Acceptance Criteria:**
+
 - ✅ 3 dashboards created (overview, security, costs)
 - ✅ Key metrics visible at a glance
 - ✅ CloudWatch alarms configured

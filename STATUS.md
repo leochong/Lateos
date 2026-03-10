@@ -1,31 +1,55 @@
 # Lateos — Project Status
 
-**Last Updated:** 2026-03-09
-**Current Phase:** MCP Protocol Integration - DEPLOYED TO PRODUCTION ✅
-**Session #:** 12
+**Last Updated:** 2026-03-10
+**Current Phase:** Email Summary Skill + MCP Integration - END-TO-END WORKING ✅
+**Session #:** 13
 
 ---
 
 ## 🎯 Active Sprint Goal
 
-**MCP Protocol Layer — Claude Desktop Integration (DEPLOYED TO PRODUCTION ✅)**
+**Email Summary Skill + MCP Integration — END-TO-END WORKING ✅**
 
-Added Model Context Protocol (MCP) server interface to expose Lateos skills to Claude Desktop and deployed to production AWS.
+Built Gmail email summarization skill with Bedrock integration, deployed to AWS dev environment, and verified complete MCP → email_summary_skill → Bedrock → Gmail chain.
 
-**Implementation Results:**
+**Session 13 Implementation Results (2026-03-10):**
+
+- ✅ **email_summary_skill Lambda created** (lambdas/email_summary_skill/handler.py - 398 lines)
+  - Gmail OAuth token retrieval from Secrets Manager (RULE 1 compliance)
+  - Automatic token refresh using google-auth-oauthlib
+  - Per-email prompt injection detection (9 regex patterns)
+  - Bedrock Claude Haiku integration for summarization
+  - PII protection prompt (no email addresses, phone numbers in output)
+  - Email address redaction in logs (RULE 8 compliance)
+
+- ✅ **MCP handler logging error FIXED**
+  - Root cause: Reserved Python logging keyword `message` in logger.error extra parameter
+  - Solution: Changed to f-string format at lambdas/core/mcp_handler.py:414
+
+- ✅ **email_summary_skill deployed to AWS dev**
+  - Function: lateos-dev-email-summary-skill
+  - Runtime: Python 3.12
+  - Dependencies: aws-xray-sdk, google-auth-oauthlib, google-api-python-client
+  - IAM: Scoped to Secrets Manager (gmail/*) and Bedrock (claude-haiku)
+  - Timeout: 60s, Memory: 512MB, Concurrency: 5 (RULE 7)
+
+- ✅ **End-to-end test PASSED**
+  - MCP handler → email_summary_skill → Bedrock → Gmail chain working
+  - Test user: demo-user-001 (OAuth token in Secrets Manager)
+  - Emails processed: 3 unread Gmail messages
+  - Bedrock summaries: 2 urgent (recovery email changed, new passkey), 1 info (account setup)
+  - All security rules maintained: RULE 1, 2, 4, 8
+
+**Previous MCP Integration Results (Session 12):**
 
 - ✅ MCP handler Lambda created (lambdas/core/mcp_handler.py)
 - ✅ MCP protocol methods: initialize, tools/list, tools/call
 - ✅ Tool exposed: lateos_email_summary (with full schema)
-- ✅ Direct email_skill Lambda invocation (boto3)
 - ✅ Cognito JWT authentication (same as /agent endpoint)
 - ✅ DynamoDB audit logging integrated
 - ✅ POST /mcp endpoint added to API Gateway
-- ✅ Scoped IAM permissions (invoke email_skill, write audit logs)
+- ✅ Scoped IAM permissions (invoke email_summary_skill, write audit logs)
 - ✅ Integration tests created (7 test cases)
-- ✅ CDK synthesis: SUCCESS (zero errors)
-- ✅ Test suite: 59/59 existing tests still passing
-- ✅ Claude Desktop config generated
 - ✅ **DEPLOYED TO PRODUCTION (2026-03-09)**
 
 **Production Deployment Results (Session 12):**
@@ -411,11 +435,11 @@ Session: 11 (2026-03-08 - Development), 12 (2026-03-09 - Production Deployment)
 
 ## 🚧 Current Blockers
 
-**None** — MCP Protocol Integration COMPLETE! ✅
+**None** — Email Summary Skill + MCP Integration END-TO-END WORKING! ✅
 
-**Latest session:** Session 11 (2026-03-08)
+**Latest session:** Session 13 (2026-03-10)
 
-**Next Phase:** Deploy MCP handler to production OR Phase 9 — Integration Development
+**Next Phase:** Production deployment of email_summary_skill OR LinkedIn demo video recording
 
 **Phase 7 Production AWS Deployment — COMPLETE:**
 
@@ -508,6 +532,31 @@ Session: 11 (2026-03-08 - Development), 12 (2026-03-09 - Production Deployment)
 ---
 
 ## 📁 Files Created / Modified This Session
+
+### Session 13 (Email Summary Skill + MCP Integration - 2026-03-10)
+
+| File | Action | Notes |
+|------|--------|-------|
+| lambdas/email_summary_skill/handler.py | Created | Gmail OAuth + Bedrock email summarization (398 lines) |
+| lambdas/email_summary_skill/requirements.txt | Created | Gmail API + Lambda Powertools dependencies |
+| scripts/test_email_summary_local.py | Created | Local test script (267 lines, 6/6 tests passed) |
+| scripts/test_mcp_email_summary.py | Created | End-to-end MCP test (128 lines) |
+| infrastructure/stacks/skills_stack.py | Modified | Added _create_email_summary_skill() method (lines 76, 186-249) |
+| infrastructure/stacks/orchestration_stack.py | Modified | Wired email_summary_skill to MCP handler (lines 729-743) |
+| lambdas/core/mcp_handler.py | Modified | Fixed logging error + email_summary_skill invocation (lines 252-313, 414) |
+| requirements.txt | Modified | Added Gmail dependencies (lines 13-16) |
+| cdk.json | Modified | Fixed Python path for CDK deployment |
+| STATUS.md | Modified | Updated with Session 13 email summary skill results |
+
+**Session Summary:**
+
+- **email_summary_skill created**: Full Gmail OAuth integration with automatic token refresh, prompt injection detection, and Bedrock summarization
+- **MCP handler logging error fixed**: Changed from reserved keyword `message` to f-string format
+- **Test script event format fixed**: Wrapped MCP request in API Gateway proxy event
+- **Dependencies fixed**: Added aws-xray-sdk to email_summary_skill requirements
+- **End-to-end test passed**: MCP → email_summary_skill → Bedrock → Gmail chain fully working
+- **Emails processed**: 3 Gmail messages with Bedrock summaries (2 urgent security alerts, 1 setup reminder)
+- **Security validated**: All RULE 1, 2, 4, 8 compliance maintained
 
 ### Session 7 (Phase 6 - Local Deployment Testing)
 
@@ -651,11 +700,11 @@ Session: 11 (2026-03-08 - Development), 12 (2026-03-09 - Production Deployment)
 ## ⏭️ Next Session Start Point
 
 ```
-Read STATUS.md first. Current phase: Phase 8 - Post-Deployment Validation & Monitoring.
+Read STATUS.md first. Current phase: Email Summary Skill + MCP Integration - END-TO-END WORKING ✅
 
-Git status: Phase 6 COMMITTED (commit 60462e1, 2026-03-05)
-Last completed: Phase 7 Production AWS deployment - All stacks deployed
-Current session: Session 9 (2026-03-07) - STATUS.md update only
+Git status: Uncommitted changes in Session 13 (2026-03-10)
+Last completed: Email summary skill with MCP integration deployed and tested
+Current session: Session 13 (2026-03-10) - Email summary skill implementation
 
 Phase 7 Summary (COMPLETE ✅):
 - ✅ Production AWS deployment: All 5 stacks CREATE_COMPLETE
@@ -710,17 +759,36 @@ Secret Detection Validated:
 - Exclusions: cdk.out/, docs/WALKTHROUGHS/, tests/, .venv/
 - Source code: Clean (no API keys, tokens, credentials, passwords)
 
-Next tasks (Phase 8 - Post-Deployment Validation):
-1. Run integration tests against production AWS endpoints
-2. Validate API Gateway + Cognito authentication flow
-3. Test Step Functions workflow end-to-end with real Bedrock
-4. Verify CloudWatch logs and X-Ray tracing
-5. Validate cost protection and budget alerts
-6. Test each skill Lambda function (email, calendar, web, file-ops)
-7. Verify DynamoDB table encryption and access patterns
-8. Document production deployment and validation results
-9. Create production runbook for operations
-10. Set up monitoring dashboards
+Session 13 Summary (2026-03-10):
+- ✅ Email summary skill created with Gmail OAuth + Bedrock integration
+- ✅ MCP handler logging error fixed (Python reserved keyword issue)
+- ✅ email_summary_skill deployed to AWS dev environment
+- ✅ End-to-end test PASSED: MCP → email_summary_skill → Bedrock → Gmail
+- ✅ 3 Gmail messages processed with Bedrock summaries
+- ✅ All security rules validated (RULE 1, 2, 4, 8)
+
+Files Created:
+- lambdas/email_summary_skill/handler.py (398 lines)
+- lambdas/email_summary_skill/requirements.txt
+- scripts/test_email_summary_local.py (267 lines)
+- scripts/test_mcp_email_summary.py (128 lines)
+
+Files Modified:
+- infrastructure/stacks/skills_stack.py (added email_summary_skill)
+- infrastructure/stacks/orchestration_stack.py (wired to MCP handler)
+- lambdas/core/mcp_handler.py (fixed logging error)
+- requirements.txt (Gmail dependencies)
+- cdk.json (Python path fix)
+
+Next tasks (LinkedIn Demo Prep):
+1. Record LinkedIn demo video showing MCP → Gmail → Bedrock chain
+2. Optionally: Deploy email_summary_skill to production (lateos-prod-email-summary-skill)
+3. Create demo script showing:
+   - Claude Desktop invoking lateos_email_summary tool
+   - Gmail OAuth authentication (Secrets Manager)
+   - Prompt injection detection in action
+   - Bedrock summarizing emails with PII protection
+   - Urgent email flagging (2 security alerts detected)
 
 Environment setup:
 - Use Python 3.12 virtual environment: source .venv312/bin/activate

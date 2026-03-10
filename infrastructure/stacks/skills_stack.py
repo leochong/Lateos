@@ -73,6 +73,7 @@ class SkillsStack(Stack):
 
         # Create skill Lambdas with scoped IAM roles
         self.email_skill = self._create_email_skill()
+        self.email_summary_skill = self._create_email_summary_skill()
         self.calendar_skill = self._create_calendar_skill()
         self.web_fetch_skill = self._create_web_fetch_skill()
         self.file_ops_skill = self._create_file_ops_skill()
@@ -181,6 +182,71 @@ class SkillsStack(Stack):
         )
 
         return email_lambda
+
+    def _create_email_summary_skill(self) -> lambda_.Function:
+        """Create email summary skill Lambda with scoped IAM role and Bedrock access"""
+
+        # Scoped IAM policy: Gmail OAuth secrets + Bedrock InvokeModel
+        policy_statements = [
+            # Secrets Manager: Only Gmail OAuth secrets (same as email_skill)
+            iam.PolicyStatement(
+                actions=["secretsmanager:GetSecretValue"],
+                resources=[
+                    (
+                        f"arn:aws:secretsmanager:{self.region}:{self.account}:"
+                        f"secret:lateos/{self.env_name}/gmail/*"
+                    )
+                ],
+            ),
+            # Bedrock: InvokeModel for Claude Haiku only (RULE 2: No wildcard)
+            iam.PolicyStatement(
+                actions=["bedrock:InvokeModel"],
+                resources=[
+                    (
+                        f"arn:aws:bedrock:{self.region}::foundation-model/"
+                        "anthropic.claude-3-haiku-20240307-v1:0"
+                    )
+                ],
+            ),
+            # DynamoDB: Write to audit table only
+            iam.PolicyStatement(
+                actions=["dynamodb:PutItem"],
+                resources=[self.audit_table.table_arn],
+            ),
+        ]
+
+        role = self._create_lambda_role("EmailSummary", policy_statements)
+
+        # Create Lambda function
+        email_summary_lambda = PythonFunction(
+            self,
+            "LateosEmailSummarySkill",
+            entry="lambdas/email_summary_skill",
+            index="handler.py",
+            handler="lambda_handler",
+            function_name=f"lateos-{self.env_name}-email-summary-skill",
+            description=(
+                "Email summary skill: Gmail OAuth + Bedrock summarization with "
+                "prompt injection detection (scoped IAM)"
+            ),
+            runtime=lambda_.Runtime.PYTHON_3_12,
+            role=role,
+            timeout=Duration.seconds(60),  # Longer timeout for Bedrock calls
+            memory_size=512,
+            reserved_concurrent_executions=5,  # RULE 7: Cost protection (lower for demo)
+            environment={
+                "ENVIRONMENT": self.env_name,
+                "AUDIT_TABLE_NAME": self.audit_table.table_name,
+                "BEDROCK_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0",
+                "POWERTOOLS_SERVICE_NAME": "email_summary_skill",
+                "POWERTOOLS_METRICS_NAMESPACE": "LateosSkills",
+                "LOG_LEVEL": "INFO",
+            },
+            tracing=lambda_.Tracing.ACTIVE,
+            log_retention=logs.RetentionDays.ONE_MONTH,
+        )
+
+        return email_summary_lambda
 
     def _create_calendar_skill(self) -> lambda_.Function:
         """Create calendar skill Lambda with scoped IAM role"""

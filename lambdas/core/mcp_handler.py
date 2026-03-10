@@ -249,20 +249,13 @@ def handle_tools_call(user_id: str, tool_name: str, arguments: Dict[str, Any]) -
             "Email skill not configured",
         )
 
-    # Build email_skill event payload
-    max_emails = arguments.get("max_emails", 10)
-    # Note: email_filter from arguments.get("filter", {}) would be used for future filtering logic
-    summary_style = arguments.get("summary_style", "brief")
+    # Build email_summary_skill event payload
+    max_emails = arguments.get("max_emails", 5)  # Default to 5 for summary
 
-    # For now, use read_emails action (summary logic would be added later)
+    # Email summary skill takes user_id and max_emails
     email_event = {
         "user_id": user_id,
-        "action": "read_emails",
-        "parameters": {
-            "folder": "inbox",
-            "limit": max_emails,
-            "unread_only": False,
-        },
+        "max_emails": max_emails,
     }
 
     try:
@@ -286,33 +279,28 @@ def handle_tools_call(user_id: str, tool_name: str, arguments: Dict[str, Any]) -
         logger.info("Email skill response", extra={"status_code": payload.get("statusCode")})
 
         if payload.get("statusCode") != 200:
-            error_msg = payload.get("body", {}).get("error", "Email skill failed")
+            error_msg = payload.get("body", {}).get("error", "Email summary skill failed")
             raise MCPError(MCP_ERROR_INTERNAL, error_msg)
 
-        # Extract email results
-        emails = payload.get("body", {}).get("result", [])
+        # Extract summary from email_summary_skill response
+        body = payload.get("body", {})
+        summary = body.get("summary", "No summary available")
+        emails_processed = body.get("emails_processed", 0)
+        emails_blocked = body.get("emails_blocked", 0)
+        blocked_emails = body.get("blocked_emails", [])
 
-        # Format summary based on style
-        if summary_style == "brief":
-            summary = f"Found {len(emails)} emails in inbox.\n\n"
-            for email in emails[:5]:  # Show first 5
-                summary += f"• From: {email.get('from')}\n"
-                summary += f"  Subject: {email.get('subject')}\n"
-                summary += f"  Snippet: {email.get('snippet')}\n\n"
-        elif summary_style == "detailed":
-            summary = f"Email Summary (Total: {len(emails)})\n\n"
-            for i, email in enumerate(emails, 1):
-                summary += f"{i}. {email.get('subject')}\n"
-                summary += f"   From: {email.get('from')}\n"
-                summary += f"   Time: {email.get('timestamp')}\n"
-                summary += f"   {email.get('snippet')}\n\n"
-        else:  # action_items
-            summary = "Action Items from Emails:\n\n"
-            summary += f"Total emails: {len(emails)}\n"
-            summary += f"Unread: {sum(1 for e in emails if e.get('unread'))}\n\n"
-            summary += "Recent emails:\n"
-            for email in emails[:3]:
-                summary += f"• {email.get('subject')} (from {email.get('from')})\n"
+        # Add metadata to summary
+        summary_with_metadata = f"{summary}\n\n---\n"
+        summary_with_metadata += f"Emails processed: {emails_processed}\n"
+        if emails_blocked > 0:
+            summary_with_metadata += f"⚠️ Emails blocked (injection detected): {emails_blocked}\n"
+            for blocked in blocked_emails:
+                summary_with_metadata += (
+                    f"  - {blocked.get('subject', 'No subject')}: {blocked.get('reason')}\n"
+                )
+
+        # Use the full summary with metadata
+        summary = summary_with_metadata
 
         # Log to audit
         log_mcp_action(
@@ -321,7 +309,8 @@ def handle_tools_call(user_id: str, tool_name: str, arguments: Dict[str, Any]) -
             {
                 "tool_name": tool_name,
                 "arguments": arguments,
-                "emails_found": len(emails),
+                "emails_processed": emails_processed,
+                "emails_blocked": emails_blocked,
             },
         )
 
@@ -424,10 +413,7 @@ def lambda_handler(event: Dict[str, Any], context: LambdaContext) -> Dict[str, A
         }
 
     except MCPError as e:
-        logger.error(
-            "MCP error",
-            extra={"code": e.code, "message": e.message, "data": e.data},
-        )
+        logger.error(f"MCP error: code={e.code}, msg={e.message}, data={e.data}")
         return {
             "statusCode": 200,  # MCP errors return 200 with error in body
             "headers": {"Content-Type": "application/json"},

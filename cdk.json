@@ -1,5 +1,5 @@
 {
-  "app": "python infrastructure/app.py",
+  "app": "/Users/leochong/Documents/projects/Lateos/.venv312/bin/python infrastructure/app.py",
   "watch": {
     "include": [
       "infrastructure/**/*.py",

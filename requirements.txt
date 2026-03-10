@@ -10,5 +10,10 @@ aws-lambda-powertools>=3.0.0
 boto3>=1.35.0
 pydantic>=2.0.0
 
+# Gmail Integration (Email Summary Skill)
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.100.0
+google-auth>=2.23.0
+
 # Utilities
 python-dateutil>=2.9.0
